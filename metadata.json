@@ -1,0 +1,8 @@
+{
+  "name": "Cyber Lexicon",
+  "description": "A high-fidelity cyberpunk word-guessing game with neon terminal aesthetics and neural-link gameplay.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
