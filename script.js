@@ -516,7 +516,13 @@ function updateHintUI() {
 	const hintsDisplay = document.getElementById("hints-remaining-display");
 	const useHintBtn = document.getElementById("use-hint-btn");
 	if (hintsDisplay) {
-		hintsDisplay.textContent = `Hinweise übrig: ${hintsRemaining}`;
+		if (hintsRemaining <= 0) {
+			hintsDisplay.textContent = "Keine Hinweise mehr verfügbar!";
+			hintsDisplay.style.color = "var(--neon-pink)";
+		} else {
+			hintsDisplay.textContent = `Hinweise übrig: ${hintsRemaining} / 3`;
+			hintsDisplay.style.color = "var(--text-muted)";
+		}
 	}
 	if (useHintBtn) {
 		if (hintsRemaining <= 0 || isGameOver) {
