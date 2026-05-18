@@ -71,6 +71,10 @@ let accumulatedScore = 0;
 let roundStartTime = 0;
 let isGameOver = false;
 
+// Hint System State
+let hintsRemaining = 3;
+const HINT_COST = 5;
+
 // Audio-Status
 let isAudioMuted = false;
 let audioCtx = null;
@@ -145,6 +149,12 @@ function bindGameEvents() {
 	// Overlay Restart / Reboot Buttons
 	const restartBtn = document.getElementById("restart-btn");
 	restartBtn.addEventListener("click", handleRestartAction);
+
+	// Hint Button Listener
+	const useHintBtn = document.getElementById("use-hint-btn");
+	if (useHintBtn) {
+		useHintBtn.addEventListener("click", handleUseHint);
+	}
 }
 
 // Visueller Tastendruck auf physischer Tastatur simulieren
@@ -232,6 +242,10 @@ function startNewDecryptionRound() {
 	mistakesCount = 0;
 	guessedLetters.clear();
 	roundStartTime = Date.now();
+	
+	// Reset hints remaining for new round
+	hintsRemaining = 3;
+	updateHintUI();
 
 	// Zufälliges Wort aus der deutschen Datenbank ziehen
 	const randomCatObj = WORD_DATABASE[Math.floor(Math.random() * WORD_DATABASE.length)];
@@ -377,6 +391,7 @@ function checkLoseCondition() {
 
 function triggerGameFinished(isWin) {
 	isGameOver = true;
+	updateHintUI();
 
 	// Overlay-Elemente
 	const overlay = document.getElementById("game-overlay");
@@ -461,6 +476,59 @@ function triggerGameFinished(isWin) {
 
 	// Overlay sanft einblenden
 	overlay.style.display = "flex";
+}
+
+// Hint System Handlers
+function handleUseHint() {
+	if (hintsRemaining <= 0 || isGameOver) return;
+
+	const uppercaseWord = secretWord.toUpperCase();
+	const unrevealedLetters = [];
+	for (let char of uppercaseWord) {
+		if (char !== " " && !guessedLetters.has(char)) {
+			unrevealedLetters.push(char);
+		}
+	}
+
+	const uniqueRemaining = Array.from(new Set(unrevealedLetters));
+
+	if (uniqueRemaining.length > 0) {
+		const randomLetter = uniqueRemaining[Math.floor(Math.random() * uniqueRemaining.length)];
+		
+		hintsRemaining--;
+		accumulatedScore = Math.max(0, accumulatedScore - HINT_COST);
+
+		updateHintUI();
+
+		const activeScoreDisp = document.getElementById("active-score-display");
+		if (activeScoreDisp) {
+			activeScoreDisp.textContent = String(accumulatedScore).padStart(4, '0');
+		}
+
+		playSynthesizedSound("correct");
+		printTerminalLog(`HINWEIS VERWENDET: Ein Buchstabe wurde aufgedeckt: "${randomLetter}"! (-5 Pkt)`, "warn");
+
+		processLetterGuess(randomLetter);
+	}
+}
+
+function updateHintUI() {
+	const hintsDisplay = document.getElementById("hints-remaining-display");
+	const useHintBtn = document.getElementById("use-hint-btn");
+	if (hintsDisplay) {
+		hintsDisplay.textContent = `Hinweise übrig: ${hintsRemaining}`;
+	}
+	if (useHintBtn) {
+		if (hintsRemaining <= 0 || isGameOver) {
+			useHintBtn.disabled = true;
+			useHintBtn.style.opacity = "0.5";
+			useHintBtn.style.cursor = "not-allowed";
+		} else {
+			useHintBtn.disabled = false;
+			useHintBtn.style.opacity = "1";
+			useHintBtn.style.cursor = "pointer";
+		}
+	}
 }
 
 // Restart / Reboot Action-Handler

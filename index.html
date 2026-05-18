@@ -194,9 +194,20 @@
 							<span class="panel-title">// SECRET_DECRYPT_STRING</span>
 							<span class="panel-tag" id="category-tag">SEKTOR_KNOTEN: SECURITY</span>
 						</div>
-						<div class="panel-body decryption-screen">
+						<div class="panel-body decryption-screen" style="flex-direction: column; gap: 20px; justify-content: space-between; padding-top: 25px;">
 							<div class="word-container" id="word-container">
 								<!-- Dynamically populated letters and dashes -->
+							</div>
+							
+							<!-- Cyber Hint decryption block -->
+							<div class="hint-control-panel" style="display: flex; align-items: center; justify-content: space-between; width: 100%; border-top: 1px dashed rgba(0, 240, 255, 0.15); padding-top: 12px; margin-top: 10px;">
+								<div class="hint-left" style="display: flex; align-items: center; gap: 8px;">
+									<button class="terminal-btn font-tech" id="use-hint-btn" style="padding: 4px 8px; font-size: 0.7rem; font-weight: bold;">// HINWEIS_ABRUFEN</button>
+									<span class="font-code" style="font-size: 0.7rem; color: var(--text-muted);" id="hints-remaining-display">Hinweise übrig: 3</span>
+								</div>
+								<div class="hint-right font-code" style="font-size: 0.65rem; color: var(--neon-pink); text-shadow: 0 0 5px var(--neon-pink-glow);">
+									KOSTEN: <span style="font-weight: bold;">-5 PKT</span>
+								</div>
 							</div>
 						</div>
 					</div>
