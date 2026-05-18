@@ -1,0 +1,58 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&family=Space+Grotesk:wght@300..700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-headline: "Space Grotesk", sans-serif;
+  --font-body: "Plus Jakarta Sans", sans-serif;
+  --font-label: "Space Grotesk", sans-serif;
+
+  --color-primary: #9cff93;
+  --color-primary-dim: #00ec3b;
+  --color-secondary: #00e3fd;
+  --color-tertiary: #ff59e3;
+  --color-background: #0a0e14;
+  --color-surface: #151a21;
+  --color-surface-high: #1b2028;
+  --color-surface-variant: #20262f;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-background);
+    color: #f1f3fc;
+    font-family: var(--font-body);
+  }
+}
+
+@layer utilities {
+  .neon-glow-primary {
+    text-shadow: 0 0 12px rgba(156, 255, 147, 0.6);
+  }
+
+  .neon-glow-secondary {
+    text-shadow: 0 0 12px rgba(0, 227, 253, 0.6);
+  }
+
+  .neon-glow-tertiary {
+    text-shadow: 0 0 12px rgba(255, 89, 227, 0.6);
+  }
+
+  .glass-panel {
+    background: rgba(32, 38, 47, 0.6);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .retro-grid {
+    background-image: 
+        linear-gradient(rgba(156, 255, 147, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(156, 255, 147, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  .scanline {
+    background: linear-gradient(to bottom, transparent 50%, rgba(10, 14, 20, 0.2) 50%);
+    background-size: 100% 4px;
+    pointer-events: none;
+  }
+}

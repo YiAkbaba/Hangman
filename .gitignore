@@ -1,4 +1,7 @@
 node_modules
+/dist
+/build
+package-lock.json
 
 # Output
 .output
@@ -6,7 +9,6 @@ node_modules
 .netlify
 .wrangler
 /.svelte-kit
-/build
 
 # OS
 .DS_Store
