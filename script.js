@@ -10,8 +10,8 @@
 // Tragen Sie hier Ihre Supabase-Verbindungsdaten ein.
 // Falls diese Standard-Platzhalter aktiv bleiben, schaltet das System
 // automatisch und nahtlos auf die lokale Speicherung (localStorage) um.
-const SUPABASE_URL = "YOUR_SUPABASE_URL";
-const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+const SUPABASE_URL = "https://chmnqtupjfklukgblzxo.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_DEvO2gDRMqArlhiVuiUsiA_eUetMLDQ";
 
 let supabase = null;
 
