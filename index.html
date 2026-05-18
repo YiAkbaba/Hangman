@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>AV-CORE DECRYPTION TERMINAL // HANGMAN</title>
+	<meta name="description" content="Decentralized retro-cyberpunk decryption system simulation. Guess the secret word to bypass the main node before system lockout.">
+	<link rel="stylesheet" href="style.css">
+	<!-- Google Fonts -->
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+</head>
+<body>
+	<!-- CRT Screen Simulation Wrapper -->
+	<div class="crt-frame">
+		<div class="crt-screen">
+			<!-- Scanline & Glare Effects -->
+			<div class="scanlines"></div>
+			<div class="screen-glare"></div>
+			<div class="glitch-overlay" id="glitch-overlay"></div>
+
+			<!-- Terminal Header -->
+			<header class="terminal-header">
+				<div class="header-left">
+					<div class="status-indicator-wrapper">
+						<span class="status-dot pulsing"></span>
+						<span class="status-text font-tech">AV-CORE://SECURE_NODE</span>
+					</div>
+					<h1 class="font-tech main-title">DECRYPTION TERMINAL <span class="version">v1.8.4</span></h1>
+				</div>
+				<div class="header-right font-code">
+					<div class="system-time" id="system-time">07:53:59</div>
+					<button class="terminal-btn audio-toggle" id="audio-toggle" title="Toggle audio feedback">
+						<span class="audio-icon font-tech">🔊 SOUND_ON</span>
+					</button>
+				</div>
+			</header>
+
+			<!-- Main Terminal Viewport Grid -->
+			<main class="terminal-grid">
+				
+				<!-- Left Panel: Gallows Graphic & Node Schematic -->
+				<section class="panel panel-left">
+					<div class="panel-header font-tech">
+						<span class="panel-title">// NODE_VISUALIZATION_GRID</span>
+						<span class="panel-tag">[SYS.VIZ]</span>
+					</div>
+					<div class="panel-body gallows-container">
+						<!-- Custom Holographic Vector SVG Gallows -->
+						<svg class="gallows-svg" viewBox="0 0 200 250" xmlns="http://www.w3.org/2000/svg">
+							<!-- Custom Glow Filters -->
+							<defs>
+								<filter id="neon-glow-cyan" x="-20%" y="-20%" width="140%" height="140%">
+									<feGaussianBlur stdDeviation="3" result="blur" />
+									<feMerge>
+										<feMergeNode in="blur" />
+										<feMergeNode in="SourceGraphic" />
+									</feMerge>
+								</filter>
+								<filter id="neon-glow-pink" x="-20%" y="-20%" width="140%" height="140%">
+									<feGaussianBlur stdDeviation="4" result="blur" />
+									<feColorMatrix type="matrix" values="
+										1 0 0 0 1
+										0 0 0 0 0
+										0 0 1 0 0.5
+										0 0 0 1 0
+									"/>
+									<feMerge>
+										<feMergeNode />
+										<feMergeNode in="SourceGraphic" />
+									</feMerge>
+								</filter>
+							</defs>
+
+							<!-- Cyber Gallows Structure (Vector Grid Lines) -->
+							<g class="gallows-base" stroke="#00ff66" stroke-width="3" fill="none" opacity="0.8">
+								<!-- Ground Base Grid lines -->
+								<line x1="20" y1="230" x2="180" y2="230" stroke-dasharray="4 2" />
+								<line x1="20" y1="230" x2="40" y2="210" />
+								<line x1="180" y1="230" x2="160" y2="210" />
+								<line x1="40" y1="210" x2="160" y2="210" />
+								<!-- Main Scaffold -->
+								<line x1="60" y1="210" x2="60" y2="40" />
+								<!-- Top Scaffold arm -->
+								<line x1="60" y1="40" x2="140" y2="40" />
+								<!-- Scaffold support brace -->
+								<line x1="60" y1="70" x2="90" y2="40" />
+								<!-- Hang Rope (Neon Orange/Pink warning color) -->
+								<line x1="140" y1="40" x2="140" y2="75" stroke="#ff0055" stroke-width="2" filter="url(#neon-glow-pink)" />
+							</g>
+
+							<!-- Cyber Hangman Assemblies: Part-by-part glowing robot assembly -->
+							<!-- Part 1: Holographic Terminal Node (Head) -->
+							<g id="hang-head" class="hang-part" stroke="#00f0ff" stroke-width="2" fill="none" filter="url(#neon-glow-cyan)">
+								<circle cx="140" cy="95" r="20" stroke-dasharray="2 1" />
+								<circle cx="140" cy="95" r="16" />
+								<!-- Internal glowing robot eye -->
+								<circle cx="140" cy="95" r="3" fill="#ff0055" stroke="none" />
+							</g>
+
+							<!-- Part 2: Robotic Central Processing Torso (Body) -->
+							<g id="hang-body" class="hang-part" stroke="#00f0ff" stroke-width="2" fill="none" filter="url(#neon-glow-cyan)">
+								<line x1="140" y1="115" x2="140" y2="165" />
+								<rect x="130" y="125" width="20" height="30" rx="3" stroke-dasharray="2 1" />
+								<!-- Core heat sink registers -->
+								<line x1="134" y1="135" x2="146" y2="135" stroke-width="1" />
+								<line x1="134" y1="140" x2="146" y2="140" stroke-width="1" />
+								<line x1="134" y1="145" x2="146" y2="145" stroke-width="1" />
+							</g>
+
+							<!-- Part 3: Left Vector Manipulation Limb (Left Arm) -->
+							<g id="hang-left-arm" class="hang-part" stroke="#00f0ff" stroke-width="2" fill="none" filter="url(#neon-glow-cyan)">
+								<!-- Articulated shoulder joint and arm -->
+								<line x1="130" y1="130" x2="105" y2="145" />
+								<line x1="105" y1="145" x2="95" y2="135" />
+								<circle cx="105" cy="145" r="3" fill="#00f0ff" />
+							</g>
+
+							<!-- Part 4: Right Vector Manipulation Limb (Right Arm) -->
+							<g id="hang-right-arm" class="hang-part" stroke="#00f0ff" stroke-width="2" fill="none" filter="url(#neon-glow-cyan)">
+								<!-- Articulated shoulder joint and arm -->
+								<line x1="150" y1="130" x2="175" y2="145" />
+								<line x1="175" y1="145" x2="185" y2="135" />
+								<circle cx="175" cy="145" r="3" fill="#00f0ff" />
+							</g>
+
+							<!-- Part 5: Left Structural Propulsion Column (Left Leg) -->
+							<g id="hang-left-leg" class="hang-part" stroke="#00f0ff" stroke-width="2" fill="none" filter="url(#neon-glow-cyan)">
+								<!-- Hip joints and lower leg assembly -->
+								<line x1="135" y1="165" x2="120" y2="205" />
+								<line x1="120" y1="205" x2="110" y2="205" />
+								<circle cx="120" cy="205" r="3" fill="#00f0ff" />
+							</g>
+
+							<!-- Part 6: Right Structural Propulsion Column (Right Leg) -->
+							<g id="hang-right-leg" class="hang-part" stroke="#00f0ff" stroke-width="2" fill="none" filter="url(#neon-glow-cyan)">
+								<!-- Hip joints and lower leg assembly -->
+								<line x1="145" y1="165" x2="160" y2="205" />
+								<line x1="160" y1="205" x2="170" y2="205" />
+								<circle cx="160" cy="205" r="3" fill="#00f0ff" />
+							</g>
+						</svg>
+					</div>
+					<!-- Grid matrix info panel underneath gallows -->
+					<div class="node-status font-code">
+						<div>COORDINATE_GRID: <span class="glowing-text-cyan" id="node-coords">0x7F2A_99B4</span></div>
+						<div>STREAK_MULTIPLIER: <span class="glowing-text-green" id="streak-counter">00</span></div>
+					</div>
+				</section>
+
+				<!-- Right Panel: Core Decryption Controls & Output Logs -->
+				<section class="panel panel-right">
+					
+					<!-- Top Right Panel: Word Decryption Screen -->
+					<div class="panel-sub-top">
+						<div class="panel-header font-tech">
+							<span class="panel-title">// SECRET_DECRYPTION_STRING</span>
+							<span class="panel-tag" id="category-tag">CATEGORY: ALGORITHMS</span>
+						</div>
+						<div class="panel-body decryption-screen">
+							<!-- Blanks display -->
+							<div class="word-container" id="word-container">
+								<!-- Dynamically populated letters and dashes -->
+							</div>
+						</div>
+					</div>
+
+					<!-- Bottom Right Panel: Console Log Buffer & Stats -->
+					<div class="panel-sub-bottom">
+						<div class="panel-header font-tech">
+							<span class="panel-title">// SYSTEM_LOG_BUFFER</span>
+							<span class="panel-tag">[SYS.LOG]</span>
+						</div>
+						<div class="panel-body console-body">
+							<!-- Dynamic Scrolling Terminal Console Log Lines -->
+							<div class="console-logs font-code" id="console-logs">
+								<!-- Populated by script.js -->
+							</div>
+						</div>
+					</div>
+
+					<!-- Attempts Grid indicators -->
+					<div class="attempts-section font-tech">
+						<span class="attempts-label">LOCKOUT_PROXIMITY:</span>
+						<div class="attempts-bar" id="attempts-bar">
+							<div class="attempt-block active"></div>
+							<div class="attempt-block active"></div>
+							<div class="attempt-block active"></div>
+							<div class="attempt-block active"></div>
+							<div class="attempt-block active"></div>
+							<div class="attempt-block active"></div>
+						</div>
+						<span class="attempts-text glowing-text-pink" id="attempts-remaining">6/6 REMAINING</span>
+					</div>
+
+				</section>
+			</main>
+
+			<!-- Lower Panel: Keyboard Matrix Input -->
+			<section class="panel keyboard-panel">
+				<div class="panel-header font-tech">
+					<span class="panel-title">// MANUAL_DECRYPTION_INPUT_MATRIX</span>
+					<span class="panel-tag">[SYS.INPUT]</span>
+				</div>
+				<div class="panel-body keyboard-body">
+					<!-- QWERTY Keyboard grid -->
+					<div class="keyboard" id="keyboard">
+						<!-- Key rows dynamically injected or hardcoded. Hardcoding makes styling more exact -->
+						<div class="kbd-row">
+							<button class="kbd-key" data-key="Q">Q</button>
+							<button class="kbd-key" data-key="W">W</button>
+							<button class="kbd-key" data-key="E">E</button>
+							<button class="kbd-key" data-key="R">R</button>
+							<button class="kbd-key" data-key="T">T</button>
+							<button class="kbd-key" data-key="Y">Y</button>
+							<button class="kbd-key" data-key="U">U</button>
+							<button class="kbd-key" data-key="I">I</button>
+							<button class="kbd-key" data-key="O">O</button>
+							<button class="kbd-key" data-key="P">P</button>
+						</div>
+						<div class="kbd-row">
+							<button class="kbd-key" data-key="A">A</button>
+							<button class="kbd-key" data-key="S">S</button>
+							<button class="kbd-key" data-key="D">D</button>
+							<button class="kbd-key" data-key="F">F</button>
+							<button class="kbd-key" data-key="G">G</button>
+							<button class="kbd-key" data-key="H">H</button>
+							<button class="kbd-key" data-key="J">J</button>
+							<button class="kbd-key" data-key="K">K</button>
+							<button class="kbd-key" data-key="L">L</button>
+						</div>
+						<div class="kbd-row">
+							<button class="kbd-key" data-key="Z">Z</button>
+							<button class="kbd-key" data-key="X">X</button>
+							<button class="kbd-key" data-key="C">C</button>
+							<button class="kbd-key" data-key="V">V</button>
+							<button class="kbd-key" data-key="B">B</button>
+							<button class="kbd-key" data-key="N">N</button>
+							<button class="kbd-key" data-key="M">M</button>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- Decryption Success / Intrusion Lockout Screen Overlays (Initially hidden) -->
+			<div class="overlay" id="game-overlay">
+				<div class="overlay-card font-code" id="overlay-card">
+					<h2 class="overlay-title font-tech" id="overlay-title">SYSTEM SECURED</h2>
+					<div class="overlay-subtitle" id="overlay-subtitle">CORRECTLY RESOLVED BYPASS NODE</div>
+					
+					<div class="overlay-word-reveal" id="overlay-word-reveal">
+						DECRYPTED_WORD: <span class="revealed-word font-tech" id="revealed-word">COMPILER</span>
+					</div>
+
+					<div class="overlay-stats">
+						<div class="stat-line">SYSTEM NODE: <span class="glowing-text-cyan" id="overlay-node-id">0x4F0B_88A1</span></div>
+						<div class="stat-line">ACTIVE MULTIPLIER: <span class="glowing-text-green" id="overlay-streak">04x</span></div>
+						<div class="stat-line">ATTEMPTS USED: <span class="glowing-text-pink" id="overlay-attempts">2/6</span></div>
+					</div>
+
+					<button class="terminal-btn restart-btn font-tech" id="restart-btn">BYPASS_NEXT_CORE</button>
+				</div>
+			</div>
+
+			<!-- Terminal Footer / Diagnostic Information -->
+			<footer class="terminal-footer font-code">
+				<div class="footer-item">SYS_STATUS: <span class="glowing-text-green">ONLINE</span></div>
+				<div class="footer-item">MATRIX_LATENCY: <span id="matrix-latency">12ms</span></div>
+				<div class="footer-item">HOST_ID: <span class="glowing-text-cyan">ANTIGRAVITY_AGENT_PROT</span></div>
+			</footer>
+
+		</div>
+	</div>
+
+	<!-- Custom canvas for background grid effects to wow the user -->
+	<canvas class="grid-canvas" id="grid-canvas"></canvas>
+
+	<!-- Script initialization -->
+	<script type="module" src="script.js"></script>
+</body>
+</html>
