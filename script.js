@@ -1,675 +1,850 @@
 /**
- * Cyber-Terminal 1984 - Retro Decryption State Engine & Web Audio Sound Synth
- * Pure, lightweight, production-grade vanilla JavaScript.
+ * Cyber-Terminal 1984 - Upgraded Decryption Game Core (German version)
+ * State machine, procedural Web Audio Synth, keyboard bindings,
+ * and Supabase Database integration with Offline local storage fallback.
  */
 
-// --- DYNAMIC WEB AUDIO SYNTHESIZER ---
-const AudioSynth = (() => {
-	let audioCtx = null;
-	let isMuted = localStorage.getItem('av_mute') === 'true';
+// ==========================================
+// SUPABASE CONFIGURATION & CREDENTIALS
+// ==========================================
+// Tragen Sie hier Ihre Supabase-Verbindungsdaten ein.
+// Falls diese Standard-Platzhalter aktiv bleiben, schaltet das System
+// automatisch und nahtlos auf die lokale Speicherung (localStorage) um.
+const SUPABASE_URL = "YOUR_SUPABASE_URL";
+const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
 
-	const init = () => {
-		if (!audioCtx) {
-			audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-		}
-		if (audioCtx.state === 'suspended') {
-			audioCtx.resume();
-		}
-	};
+let supabase = null;
 
-	const play = (type) => {
-		if (isMuted) return;
-		try {
-			init();
-			const now = audioCtx.currentTime;
-
-			switch (type) {
-				case 'keypress': {
-					// High-pitch mechanical cyber-click sound
-					const osc = audioCtx.createOscillator();
-					const gain = audioCtx.createGain();
-					
-					osc.type = 'sine';
-					osc.frequency.setValueAtTime(1200, now);
-					osc.frequency.exponentialRampToValueAtTime(300, now + 0.05);
-
-					gain.gain.setValueAtTime(0.04, now);
-					gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
-
-					osc.connect(gain);
-					gain.connect(audioCtx.destination);
-					osc.start(now);
-					osc.stop(now + 0.05);
-					break;
-				}
-				case 'correct': {
-					// Upward retro synth chime
-					const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
-					notes.forEach((freq, index) => {
-						const osc = audioCtx.createOscillator();
-						const gain = audioCtx.createGain();
-						const time = now + index * 0.07;
-
-						osc.type = 'triangle';
-						osc.frequency.setValueAtTime(freq, time);
-
-						gain.gain.setValueAtTime(0.0, time);
-						gain.gain.linearRampToValueAtTime(0.08, time + 0.02);
-						gain.gain.exponentialRampToValueAtTime(0.001, time + 0.2);
-
-						osc.connect(gain);
-						gain.connect(audioCtx.destination);
-						osc.start(time);
-						osc.stop(time + 0.25);
-					});
-					break;
-				}
-				case 'wrong': {
-					// Dissonant low frequency electronic buzz
-					const osc1 = audioCtx.createOscillator();
-					const osc2 = audioCtx.createOscillator();
-					const gain = audioCtx.createGain();
-
-					osc1.type = 'sawtooth';
-					osc1.frequency.setValueAtTime(130, now);
-					osc1.frequency.linearRampToValueAtTime(90, now + 0.25);
-
-					osc2.type = 'square';
-					osc2.frequency.setValueAtTime(133, now);
-					osc2.frequency.linearRampToValueAtTime(93, now + 0.25);
-
-					gain.gain.setValueAtTime(0.08, now);
-					gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
-
-					osc1.connect(gain);
-					osc2.connect(gain);
-					gain.connect(audioCtx.destination);
-
-					osc1.start(now);
-					osc2.start(now);
-					osc1.stop(now + 0.3);
-					osc2.stop(now + 0.3);
-					break;
-				}
-				case 'victory': {
-					// Glorious retro cyber fanfare
-					const melody = [
-						{ f: 523.25, d: 0.1 }, // C5
-						{ f: 587.33, d: 0.1 }, // D5
-						{ f: 659.25, d: 0.1 }, // E5
-						{ f: 783.99, d: 0.1 }, // G5
-						{ f: 880.00, d: 0.1 }, // A5
-						{ f: 1046.50, d: 0.4 } // C6
-					];
-					let startTime = now;
-					melody.forEach((note) => {
-						const osc = audioCtx.createOscillator();
-						const gain = audioCtx.createGain();
-
-						osc.type = 'sine';
-						osc.frequency.setValueAtTime(note.f, startTime);
-
-						gain.gain.setValueAtTime(0.0, startTime);
-						gain.gain.linearRampToValueAtTime(0.08, startTime + 0.02);
-						gain.gain.exponentialRampToValueAtTime(0.001, startTime + note.d);
-
-						osc.connect(gain);
-						gain.connect(audioCtx.destination);
-
-						osc.start(startTime);
-						osc.stop(startTime + note.d);
-						startTime += note.d * 0.8;
-					});
-					break;
-				}
-				case 'defeat': {
-					// Decelerating downward terminal buzz drone
-					const osc = audioCtx.createOscillator();
-					const oscMod = audioCtx.createOscillator();
-					const modGain = audioCtx.createGain();
-					const mainGain = audioCtx.createGain();
-
-					osc.type = 'square';
-					osc.frequency.setValueAtTime(180, now);
-					osc.frequency.linearRampToValueAtTime(45, now + 0.8);
-
-					// Low frequency oscillator for trembling buzz sound
-					oscMod.frequency.setValueAtTime(15, now);
-					modGain.gain.setValueAtTime(25, now);
-
-					mainGain.gain.setValueAtTime(0.12, now);
-					mainGain.gain.linearRampToValueAtTime(0.12, now + 0.5);
-					mainGain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
-
-					oscMod.connect(modGain);
-					modGain.connect(osc.frequency);
-					osc.connect(mainGain);
-					mainGain.connect(audioCtx.destination);
-
-					oscMod.start(now);
-					osc.start(now);
-					oscMod.stop(now + 0.8);
-					osc.stop(now + 0.8);
-					break;
-				}
-			}
-		} catch (e) {
-			console.warn('Audio synthesis block interrupted:', e);
-		}
-	};
-
-	const toggleMute = () => {
-		isMuted = !isMuted;
-		localStorage.setItem('av_mute', isMuted);
-		return isMuted;
-	};
-
-	const getMuteState = () => isMuted;
-
-	return { init, play, toggleMute, getMuteState };
-})();
-
-// --- SYSTEM WORD DATABASE ---
-const WORD_DATABASE = {
-	"SECURITY": [
-		"CRYPTOGRAPHY", "FIREWALL", "INTRUSION", "DECRYPTION", "PASSWORD", 
-		"CERTIFICATE", "MAINFRAME", "PROTOCOL", "BACKDOOR", "CYBERSECURITY",
-		"ENCRYPTION", "VULNERABILITY", "MALWARE", "AUTHENTICATION", "REDUNDANCY"
-	],
-	"DEVELOPMENT": [
-		"COMPILER", "ALGORITHM", "RECURSION", "VARIABLE", "INTERFACE", 
-		"FUNCTION", "DATABASE", "PARAMETER", "INHERITANCE", "POLYMORPHISM",
-		"ASYNCHRONOUS", "REPOSITORY", "DEPENDENCY", "FRAMEWORK", "COMPILATION"
-	],
-	"CYBERPUNK": [
-		"NEUROMANCER", "SYNTHWAVE", "SIMULATION", "HOLOGRAPHIC", "ROBOTIC", 
-		"CYBERNETIC", "VECTOR", "GLITCH", "DISTORTION", "VIRTUAL",
-		"AUGMENTATION", "NANOTECHNOLOGY", "METROPOLIS", "GRID", "BIOMETRIC"
-	],
-	"COSMOLOGY": [
-		"ANTIGRAVITY", "QUANTUM", "SINGULARITY", "SUPERNOVA", "RELATIVITY", 
-		"SPACETIME", "ASTEROID", "GALAXY", "TELEMETRY", "ASTROPHYSICS",
-		"MULTIVERSE", "GRAVITATION", "COSMOS", "SPECTROSCOPY", "CONSTELLATION"
-	]
-};
-
-// --- GAME ENGINE STATE ---
-const GameState = {
-	secretWord: "",
-	wordCategory: "",
-	guessedLetters: new Set(),
-	remainingGuesses: 6,
-	streak: parseInt(localStorage.getItem('av_streak') || '0', 10),
-	nodeId: "",
-	isGameOver: false,
-	attemptsMax: 6,
-
-	randomizeNodeId: () => {
-		const chars = '0123456789ABCDEF';
-		let hash = '0x';
-		for (let i = 0; i < 8; i++) {
-			hash += chars[Math.floor(Math.random() * 16)];
-		}
-		GameState.nodeId = hash;
+// Initialisierung des Supabase-Clients aus dem CDN SDK
+if (
+	typeof window.supabase !== 'undefined' && 
+	SUPABASE_URL !== "YOUR_SUPABASE_URL" && 
+	SUPABASE_ANON_KEY !== "YOUR_SUPABASE_ANON_KEY"
+) {
+	try {
+		supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+		console.log("[SUPABASE] Client erfolgreich initialisiert.");
+	} catch (error) {
+		console.error("[SUPABASE] Initialisierungsfehler:", error);
 	}
-};
+} else {
+	console.log("[SUPABASE] Keine Zugangsdaten gesetzt. Verwende Offline LocalStorage-Modus.");
+}
 
-// --- DOM ELEMENTS REFERENCE ---
-const DOM = {
-	time: document.getElementById('system-time'),
-	audioToggle: document.getElementById('audio-toggle'),
-	wordContainer: document.getElementById('word-container'),
-	consoleLogs: document.getElementById('console-logs'),
-	attemptsBar: document.getElementById('attempts-bar'),
-	attemptsRemaining: document.getElementById('attempts-remaining'),
-	nodeCoords: document.getElementById('node-coords'),
-	streakCounter: document.getElementById('streak-counter'),
-	categoryTag: document.getElementById('category-tag'),
-	keyboard: document.getElementById('keyboard'),
-	gameOverlay: document.getElementById('game-overlay'),
-	overlayCard: document.getElementById('overlay-card'),
-	overlayTitle: document.getElementById('overlay-title'),
-	overlaySubtitle: document.getElementById('overlay-subtitle'),
-	revealedWord: document.getElementById('revealed-word'),
-	overlayNodeId: document.getElementById('overlay-node-id'),
-	overlayStreak: document.getElementById('overlay-streak'),
-	overlayAttempts: document.getElementById('overlay-attempts'),
-	restartBtn: document.getElementById('restart-btn'),
-	glitchOverlay: document.getElementById('glitch-overlay'),
-	matrixLatency: document.getElementById('matrix-latency'),
-	canvas: document.getElementById('grid-canvas'),
-	svgParts: {
-		head: document.getElementById('hang-head'),
-		body: document.getElementById('hang-body'),
-		leftArm: document.getElementById('hang-left-arm'),
-		rightArm: document.getElementById('hang-right-arm'),
-		leftLeg: document.getElementById('hang-left-leg'),
-		rightLeg: document.getElementById('hang-right-leg')
+// ==========================================
+// DEUTSCHES WORTREGISTER NACH KATEGORIEN
+// ==========================================
+// Zur Vermeidung von Tastatur-Layout-Mismatch werden deutsche Begriffe 
+// im ASCII-Hacker-Stil ohne Umlaute hinterlegt (z.B. AE, OE, UE, SS).
+const WORD_DATABASE = [
+	{
+		category: "SICHERHEIT",
+		words: ["KRYPTOGRAPHIE", "FEUERWALL", "ENTSCHLUESSELUNG", "PASSWORT", "PROTOKOLL", "MAINBOARD", "REDUNZANZ", "DATENSCHUTZ"]
+	},
+	{
+		category: "PROGRAMMIERUNG",
+		words: ["ALGORITHMUS", "VARIABLEN", "REKURSION", "SCHNITTSTELLE", "DATENBANK", "COMPILER", "PARAMETER", "VERERBUNG"]
+	},
+	{
+		category: "CYBERPUNK",
+		words: ["SYNTHWAVE", "SIMULATION", "CYBERNETIC", "ROBOTER", "AUGMENTATION", "GLITCH", "NEONLICHT", "VIRTUELL"]
+	},
+	{
+		category: "WELTALL",
+		words: ["ANTIGRAVITATION", "QUANTENPHYSIK", "SINGULARITAET", "WELTRAUM", "SUPERNOVA", "TELEMETRIE", "ASTEROID", "GALAXIE"]
 	}
-};
-
-// SVG Hangman Assembly Mapping (ordered by guess mistakes 1 to 6)
-const GALLOWS_ASSEMBLY_ORDER = [
-	DOM.svgParts.head,
-	DOM.svgParts.body,
-	DOM.svgParts.leftArm,
-	DOM.svgParts.rightArm,
-	DOM.svgParts.leftLeg,
-	DOM.svgParts.rightLeg
 ];
 
-// --- TERMINAL LOGGER BUFFER ---
-const TerminalLog = {
-	clear: () => {
-		DOM.consoleLogs.innerHTML = '';
-	},
-	print: (text, type = 'info') => {
-		const line = document.createElement('div');
-		line.className = `log-line log-${type}`;
+// ==========================================
+// SPIELZUSTAND / STATE MANAGEMENT
+// ==========================================
+let currentAgentName = "";
+let secretWord = "";
+let secretCategory = "";
+let guessedLetters = new Set();
+let mistakesCount = 0;
+const MAX_MISTAKES = 6;
+
+// Punkte-Akkumulation über fortlaufende Runden
+let activeStreak = 0;
+let accumulatedScore = 0;
+let roundStartTime = 0;
+let isGameOver = false;
+
+// Audio-Status
+let isAudioMuted = false;
+let audioCtx = null;
+
+// ==========================================
+// INITIALISIERUNG BEIM LADEN DER SEITE
+// ==========================================
+document.addEventListener("DOMContentLoaded", () => {
+	// Canvas Synthwave-Gitter zeichnen
+	initBackgroundGrid();
+	
+	// Uhrzeit aktualisieren
+	setInterval(updateSystemTime, 1000);
+	updateSystemTime();
+
+	// Leaderboard auf dem Startbildschirm initial aufrufen
+	fetchLeaderboard();
+
+	// Event-Listener binden
+	bindGameEvents();
+	
+	// Default Hangman-Teile ausblenden
+	resetHangmanVisuals();
+});
+
+// ==========================================
+// EVENT-BINDUNGEN & NAVIGATIONS-CONTROLLER
+// ==========================================
+function bindGameEvents() {
+	// Startbildschirm "SPIEL STARTEN" Button
+	const startBtn = document.getElementById("start-game-btn");
+	startBtn.addEventListener("click", handleAgentLogin);
+
+	// Eingabe-Feld reagiert auf Enter
+	const usernameInput = document.getElementById("username-input");
+	usernameInput.addEventListener("keydown", (e) => {
+		if (e.key === "Enter") {
+			handleAgentLogin();
+		}
+	});
+
+	// Audio Stummschalter
+	const audioBtn = document.getElementById("audio-toggle");
+	audioBtn.addEventListener("click", toggleAudioState);
+
+	// Virtuelles Keyboard Klicks
+	const keyboard = document.getElementById("keyboard");
+	keyboard.addEventListener("click", (e) => {
+		if (e.target.classList.contains("kbd-key") && !isGameOver) {
+			const key = e.target.getAttribute("data-key");
+			processLetterGuess(key);
+		}
+	});
+
+	// Physische Tastatur-Eingaben binden
+	document.addEventListener("keydown", (e) => {
+		// Ignoriere, falls der Startbildschirm aktiv ist (wegen Namenseingabe)
+		const startScreen = document.getElementById("start-screen");
+		if (startScreen.style.display !== "none") return;
 		
-		const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false });
-		line.innerText = `[${timestamp}] ${text}`;
-		
-		DOM.consoleLogs.appendChild(line);
-		
-		// Auto scroll to bottom
-		DOM.consoleLogs.scrollTop = DOM.consoleLogs.scrollHeight;
+		if (isGameOver) return;
+
+		const char = e.key.toUpperCase();
+		// Reguläre A-Z Zeichen abfangen
+		if (char.length === 1 && char >= "A" && char <= "Z") {
+			// Visuelle Tastatur-Animation triggern
+			animatePhysicalKeyPress(char);
+			processLetterGuess(char);
+		}
+	});
+
+	// Overlay Restart / Reboot Buttons
+	const restartBtn = document.getElementById("restart-btn");
+	restartBtn.addEventListener("click", handleRestartAction);
+}
+
+// Visueller Tastendruck auf physischer Tastatur simulieren
+function animatePhysicalKeyPress(char) {
+	const keyEl = document.querySelector(`.kbd-key[data-key="${char}"]`);
+	if (keyEl && !keyEl.classList.contains("correct") && !keyEl.classList.contains("incorrect")) {
+		keyEl.classList.add("physical-pressed");
+		setTimeout(() => {
+			keyEl.classList.remove("physical-pressed");
+		}, 100);
 	}
-};
+}
 
-// --- DYNAMIC BACKGROUND CANVAS GRID ---
-const CanvasGrid = (() => {
-	let ctx = null;
-	let animationFrame = null;
-	let width = 0;
-	let height = 0;
-	let offset = 0;
+// Systemzeit aktualisieren
+function updateSystemTime() {
+	const timeEl = document.getElementById("system-time");
+	if (timeEl) {
+		const now = new Date();
+		const hours = String(now.getHours()).padStart(2, '0');
+		const minutes = String(now.getMinutes()).padStart(2, '0');
+		const seconds = String(now.getSeconds()).padStart(2, '0');
+		timeEl.textContent = `${hours}:${minutes}:${seconds}`;
+	}
+}
 
-	const init = () => {
-		if (!DOM.canvas) return;
-		ctx = DOM.canvas.getContext('2d');
-		resize();
-		window.addEventListener('resize', resize);
-		draw();
-	};
+// ==========================================
+// STARTSEITE & LOGIN-VALIDIERUNG
+// ==========================================
+function handleAgentLogin() {
+	const inputEl = document.getElementById("username-input");
+	const inputWrapper = inputEl.parentElement;
+	const username = inputEl.value.trim().toUpperCase();
 
-	const resize = () => {
-		width = DOM.canvas.width = window.innerWidth;
-		height = DOM.canvas.height = window.innerHeight;
-	};
+	if (!username) {
+		// Validierungs-Fehler: Eingabe rot blinken lassen
+		playSynthesizedSound("error");
+		inputWrapper.classList.add("error-shake");
+		setTimeout(() => {
+			inputWrapper.classList.remove("error-shake");
+		}, 400);
 
-	const draw = () => {
-		if (!ctx) return;
-		ctx.clearRect(0, 0, width, height);
+		// Warnung in die Konsole drucken (falls sichtbar oder Debug)
+		console.warn("[LOGIN] Agenten-Kennung darf nicht leer sein.");
+		return;
+	}
 
-		// Synthwave Cyber Isometric Grid drawing
-		ctx.strokeStyle = 'rgba(0, 240, 255, 0.15)';
-		ctx.lineWidth = 1;
+	// Audio-Context initialisieren (Browser erfordert Benutzerinteraktion!)
+	initAudioContext();
 
-		const horizon = height * 0.45;
-		const gridCount = 28;
-		offset = (offset + 0.4) % 40; // Speed of movement
+	currentAgentName = username;
+	
+	// Startbildschirm ausblenden
+	const startScreen = document.getElementById("start-screen");
+	startScreen.style.opacity = "0";
+	setTimeout(() => {
+		startScreen.style.display = "none";
+	}, 400);
 
-		// Draw perspective lines originating from vanishing point
-		const vpX = width / 2;
-		const vpY = horizon;
+	// Status-Werte im Core-Terminal anpassen
+	document.getElementById("active-agent-display").textContent = currentAgentName;
+	document.getElementById("active-score-display").textContent = String(accumulatedScore).padStart(4, '0');
 
-		for (let i = -gridCount; i <= gridCount; i++) {
-			const xVal = vpX + i * (width / gridCount) * 1.5;
-			ctx.beginPath();
-			ctx.moveTo(vpX, vpY);
-			ctx.lineTo(xVal, height);
-			ctx.stroke();
-		}
+	// Initialer Bootup-Sound und Spielstart
+	playSynthesizedSound("correct");
+	
+	// Konsolen-Logs zurücksetzen & Start-Sequenz drucken
+	const logBox = document.getElementById("console-logs");
+	logBox.innerHTML = "";
+	
+	printTerminalLog(`AV-ENTSCHLUESSLER VERSIOM 1.8.4 WIRD INITIALISIERT...`, "info");
+	printTerminalLog(`VERBINDUNG MIT QUANTEN-KNOTEN-DATENBANK WIRD HERGESTELLT...`, "info");
+	printTerminalLog(`SICHERHEITSSCHILD AKTIV. SPERRUNG NACH ${MAX_MISTAKES} RETRIES.`, "warn");
+	printTerminalLog(`ANGEMELDETER AGENT: [${currentAgentName}]`, "success");
+	printTerminalLog(`-----------------------------------------------------`, "info");
 
-		// Draw horizontal depth-scaling lattice grid lines
-		for (let j = 0; j < 25; j++) {
-			// Exponential depth scaling formula
-			const ratio = (j + offset / 40) / 25;
-			const yVal = horizon + (height - horizon) * Math.pow(ratio, 2.5);
+	// Runde 1 starten
+	startNewDecryptionRound();
+}
 
-			ctx.beginPath();
-			ctx.moveTo(0, yVal);
-			ctx.lineTo(width, yVal);
-			ctx.stroke();
-		}
+// ==========================================
+// SPIELSCHLEIFE / DECHIFFRIERUNG
+// ==========================================
+function startNewDecryptionRound() {
+	isGameOver = false;
+	mistakesCount = 0;
+	guessedLetters.clear();
+	roundStartTime = Date.now();
 
-		// Glowing neon line on the horizon
-		ctx.strokeStyle = '#ff0055';
-		ctx.lineWidth = 2;
-		ctx.shadowBlur = 15;
-		ctx.shadowColor = 'rgba(255,0,85,0.5)';
-		ctx.beginPath();
-		ctx.moveTo(0, horizon);
-		ctx.lineTo(width, horizon);
-		ctx.stroke();
+	// Zufälliges Wort aus der deutschen Datenbank ziehen
+	const randomCatObj = WORD_DATABASE[Math.floor(Math.random() * WORD_DATABASE.length)];
+	secretCategory = randomCatObj.category;
+	secretWord = randomCatObj.words[Math.floor(Math.random() * randomCatObj.words.length)].toUpperCase();
+
+	// UI Sektor-Node anpassen
+	document.getElementById("category-tag").textContent = `SEKTOR_KNOTEN: ${secretCategory}`;
+	document.getElementById("node-coords").textContent = "0x" + Math.floor(Math.random() * 65535).toString(16).toUpperCase();
+
+	// Virtuelle Tastatur-Tasten zurücksetzen
+	const keys = document.querySelectorAll(".kbd-key");
+	keys.forEach(k => {
+		k.className = "kbd-key";
+	});
+
+	// Hangman SVG-Visualisierungen resetten
+	resetHangmanVisuals();
+
+	// attempts bar resetten
+	updateAttemptsBarVisuals();
+
+	// Slots zeichnen
+	renderSecretWordSlots();
+
+	printTerminalLog(`NEUER SEKTOR SICHERGESTELLT. KATEGORIE: ${secretCategory}`, "info");
+	printTerminalLog(`SENDER SIGNAL STARK. ENTSCHLUESSELUNG GEÖFFNET.`, "info");
+}
+
+function renderSecretWordSlots() {
+	const container = document.getElementById("word-container");
+	container.innerHTML = "";
+
+	for (let char of secretWord) {
+		const slot = document.createElement("div");
+		slot.classList.add("letter-slot");
 		
-		// Reset shadow for next drawings
-		ctx.shadowBlur = 0;
+		// Falls das Zeichen erraten wurde, anzeigen
+		if (guessedLetters.has(char)) {
+			slot.textContent = char;
+			slot.classList.add("revealed");
+		} else {
+			slot.textContent = "";
+		}
+		
+		container.appendChild(slot);
+	}
+}
 
-		animationFrame = requestAnimationFrame(draw);
-	};
+// Einen getätigten Buchstaben-Tipp verarbeiten
+function processLetterGuess(letter) {
+	if (guessedLetters.has(letter) || isGameOver) return;
 
-	return { init };
-})();
+	guessedLetters.add(letter);
+	const keyEl = document.querySelector(`.kbd-key[data-key="${letter}"]`);
 
-// --- GAME LOGIC ---
-
-// Refresh remaining guess block indicator status
-const updateAttemptsDisplay = () => {
-	const blocks = DOM.attemptsBar.querySelectorAll('.attempt-block');
-	const rem = GameState.remainingGuesses;
-	
-	DOM.attemptsRemaining.innerText = `${rem}/6 REMAINING`;
-	
-	// Trigger warning text colors based on remaining count
-	DOM.attemptsRemaining.className = "attempts-text";
-	if (rem <= 1) {
-		DOM.attemptsRemaining.classList.add("glowing-text-pink");
-	} else if (rem <= 3) {
-		DOM.attemptsRemaining.className = "attempts-text";
-		DOM.attemptsRemaining.style.color = "#ffa500";
-		DOM.attemptsRemaining.style.textShadow = "0 0 6px rgba(255,165,0,0.4)";
+	if (secretWord.includes(letter)) {
+		// Buchstabe korrekt!
+		if (keyEl) keyEl.classList.add("correct");
+		playSynthesizedSound("correct");
+		printTerminalLog(`KNOTEN ENTSCHLUESSELT: SYMBOL "${letter}" BESTAETIGT.`, "success");
+		
+		renderSecretWordSlots();
+		checkWinCondition();
 	} else {
-		DOM.attemptsRemaining.classList.add("glowing-text-green");
+		// Buchstabe falsch!
+		mistakesCount++;
+		if (keyEl) keyEl.classList.add("incorrect");
+		playSynthesizedSound("wrong");
+		printTerminalLog(`ENTSCHLUESSELUNGSFEHLER: SYMBOL "${letter}" ABGEWIESEN.`, "error");
+		
+		// Hangman-Visualisierung fortschreiben
+		updateHangmanVisuals();
+		updateAttemptsBarVisuals();
+		checkLoseCondition();
 	}
+}
+
+// visual updates
+function resetHangmanVisuals() {
+	const parts = document.querySelectorAll(".hang-part");
+	parts.forEach(p => p.classList.remove("assembled"));
+}
+
+function updateHangmanVisuals() {
+	const partsOrder = [
+		"#hang-head",
+		"#hang-body",
+		"#hang-left-arm",
+		"#hang-right-arm",
+		"#hang-left-leg",
+		"#hang-right-leg"
+	];
+
+	if (mistakesCount > 0 && mistakesCount <= MAX_MISTAKES) {
+		const targetSelector = partsOrder[mistakesCount - 1];
+		const element = document.querySelector(targetSelector);
+		if (element) {
+			element.classList.add("assembled");
+		}
+	}
+}
+
+function updateAttemptsBarVisuals() {
+	const blocks = document.querySelectorAll(".attempt-block");
+	const remainingText = document.getElementById("attempts-remaining");
+	const remainingCount = MAX_MISTAKES - mistakesCount;
+
+	remainingText.textContent = `${remainingCount}/${MAX_MISTAKES} UEBRIG`;
 
 	blocks.forEach((block, index) => {
-		// Index matches 0 to 5. We fill blocks from left to right.
-		if (index < rem) {
-			block.className = 'attempt-block active';
-			if (rem <= 1) {
-				block.classList.add('critical');
-			} else if (rem <= 3) {
-				block.classList.add('warning');
+		if (index < remainingCount) {
+			block.className = "attempt-block active";
+			// Warnung-Stile hinzufügen
+			if (remainingCount <= 2) {
+				block.classList.add("warning");
+			}
+			if (remainingCount === 1) {
+				block.classList.replace("warning", "critical");
 			}
 		} else {
-			block.className = 'attempt-block';
+			block.className = "attempt-block";
 		}
 	});
-};
+}
 
-// Inject and format word dashes
-const renderWordProgress = () => {
-	DOM.wordContainer.innerHTML = '';
-	const word = GameState.secretWord;
-	
-	for (let i = 0; i < word.length; i++) {
-		const letter = word[i];
-		const slot = document.createElement('div');
-		slot.className = 'letter-slot';
-		
-		if (GameState.guessedLetters.has(letter)) {
-			slot.innerText = letter;
-			slot.classList.add('revealed');
-		} else {
-			slot.innerText = '';
-		}
-		
-		DOM.wordContainer.appendChild(slot);
+// ==========================================
+// WIN / LOSE MECHANISMEN & PUNKTE-SYSTEM
+// ==========================================
+function checkWinCondition() {
+	// Prüfen, ob alle Buchstaben des geheimen Wortes erraten wurden
+	const wordSolved = [...secretWord].every(char => guessedLetters.has(char));
+	if (wordSolved) {
+		triggerGameFinished(true);
 	}
-};
+}
 
-// Check Game state transitions
-const checkGameStatus = () => {
-	const word = GameState.secretWord;
+function checkLoseCondition() {
+	if (mistakesCount >= MAX_MISTAKES) {
+		triggerGameFinished(false);
+	}
+}
+
+function triggerGameFinished(isWin) {
+	isGameOver = true;
+
+	// Overlay-Elemente
+	const overlay = document.getElementById("game-overlay");
+	const card = document.getElementById("game-overlay").firstElementChild;
+	const title = document.getElementById("overlay-title");
+	const subtitle = document.getElementById("overlay-subtitle");
+	const revealedWordSpan = document.getElementById("revealed-word");
+	const nodeIdSpan = document.getElementById("overlay-node-id");
 	
-	// 1. Victory check: Have all letters in the word been guessed?
-	const isVictorious = [...word].every(char => GameState.guessedLetters.has(char));
-	if (isVictorious) {
-		triggerWinState();
+	const mistakesBonusSpan = document.getElementById("overlay-mistakes-bonus");
+	const timeBonusSpan = document.getElementById("overlay-time-bonus");
+	const roundScoreSpan = document.getElementById("overlay-round-score");
+	const totalScoreSpan = document.getElementById("overlay-total-score");
+	const restartBtn = document.getElementById("restart-btn");
+
+	// CRT Glitch-Effekt triggern
+	triggerScreenGlitch();
+
+	// Berechnungen für Punkte-System
+	let mistakesBonus = 0;
+	let timeBonus = 0;
+	let roundScore = 0;
+
+	nodeIdSpan.textContent = "0x" + Math.floor(Math.random() * 4294967295).toString(16).toUpperCase();
+	revealedWordSpan.textContent = secretWord;
+
+	if (isWin) {
+		activeStreak++;
+		
+		// 1. Fehler-Bonus (200 Punkte pro übrigem Fehlversuch)
+		const remainingGuesses = MAX_MISTAKES - mistakesCount;
+		mistakesBonus = remainingGuesses * 200;
+
+		// 2. Zeit-Bonus (Schnelligkeit zahlt sich aus!)
+		const timeElapsed = (Date.now() - roundStartTime) / 1000; // Sekunden
+		timeBonus = Math.max(0, Math.floor(1000 - timeElapsed * 15));
+
+		// 3. Gesamte Rundenpunkte addieren
+		roundScore = 1000 + mistakesBonus + timeBonus; // 1000 Basis
+		accumulatedScore += roundScore;
+
+		// UI-Befüllung
+		title.textContent = "SYSTEM GESICHERT";
+		subtitle.textContent = "ENTSCHLÜSSELUNGS-KNOTEN ERFOLGREICH GEKNACKT";
+		mistakesBonusSpan.textContent = `+${mistakesBonus}`;
+		timeBonusSpan.textContent = `+${timeBonus}`;
+		roundScoreSpan.textContent = `+${roundScore}`;
+		totalScoreSpan.textContent = String(accumulatedScore).padStart(5, '0');
+		restartBtn.textContent = "NÄCHSTEN_KNOTEN_ENTSCHLÜSSELN";
+
+		// Success Theme
+		card.className = "overlay-card font-code overlay-success";
+		playSynthesizedSound("victory");
+		printTerminalLog(`BYPASS-KNOTEN ERFOLGREICH GELÖST! SCORE-BONUS ADDIERT: +${roundScore}`, "success");
+	} else {
+		// Verloren (Game Over)
+		title.textContent = "SYSTEM GESPERRT";
+		subtitle.textContent = "INTRUSION ABGEBROCHEN - SYSTEM LOCKOUT";
+		
+		mistakesBonusSpan.textContent = "+0";
+		timeBonusSpan.textContent = "+0";
+		roundScoreSpan.textContent = "+0";
+		
+		// Endgültiger Score, der hochgeladen wird
+		totalScoreSpan.textContent = String(accumulatedScore).padStart(5, '0');
+		restartBtn.textContent = "SYSTEM_REBOOTEN";
+
+		// Failure Theme
+		card.className = "overlay-card font-code overlay-failure";
+		playSynthesizedSound("defeat");
+		printTerminalLog(`TERMINAL LOCKOUT AKTIVIERT. DEC-PROZESS FEHLGESCHLAGEN.`, "error");
+
+		// SCORE AUTOMATISCH IN DATENBANK SPEICHERN BEI GAME OVER (nur wenn Score > 0)
+		if (accumulatedScore > 0) {
+			printTerminalLog(`SPEICHERE ENDGÜLTIGEN SCORE VON ${accumulatedScore} IN BESTENLISTE...`, "warn");
+			saveHighscore(currentAgentName, accumulatedScore);
+		}
+	}
+
+	// Update Core HUD
+	document.getElementById("active-score-display").textContent = String(accumulatedScore).padStart(4, '0');
+
+	// Overlay sanft einblenden
+	overlay.style.display = "flex";
+}
+
+// Restart / Reboot Action-Handler
+function handleRestartAction() {
+	const overlay = document.getElementById("game-overlay");
+	overlay.style.display = "none";
+
+	const restartBtn = document.getElementById("restart-btn");
+	
+	if (restartBtn.textContent === "NÄCHSTEN_KNOTEN_ENTSCHLÜSSELN") {
+		// Gewonnen -> Nächste Runde, behalte Streak & Score
+		startNewDecryptionRound();
+	} else {
+		// Verloren (SYSTEM_REBOOTEN) -> Zurück zum Startbildschirm, Reset Score
+		accumulatedScore = 0;
+		activeStreak = 0;
+
+		// Startbildschirm vorbereiten
+		document.getElementById("username-input").value = "";
+		
+		const startScreen = document.getElementById("start-screen");
+		startScreen.style.display = "flex";
+		setTimeout(() => {
+			startScreen.style.opacity = "1";
+		}, 50);
+
+		// Bestenliste neu laden (um frisch hochgeladenen Score anzuzeigen!)
+		fetchLeaderboard();
+	}
+}
+
+// Visueller CRT Glitch-Flash
+function triggerScreenGlitch() {
+	const glitchEl = document.getElementById("glitch-overlay");
+	if (glitchEl) {
+		glitchEl.classList.add("glitch-active");
+		setTimeout(() => { glitchEl.classList.remove("glitch-active"); }, 40);
+		setTimeout(() => { glitchEl.classList.add("glitch-active"); }, 100);
+		setTimeout(() => { glitchEl.classList.remove("glitch-active"); }, 130);
+	}
+}
+
+// Konsolen-Logger
+function printTerminalLog(text, type = "info") {
+	const logsContainer = document.getElementById("console-logs");
+	if (!logsContainer) return;
+
+	const line = document.createElement("div");
+	line.classList.add("log-line");
+
+	const time = new Date();
+	const stamp = `[${String(time.getHours()).padStart(2, '0')}:${String(time.getMinutes()).padStart(2, '0')}:${String(time.getSeconds()).padStart(2, '0')}] `;
+
+	if (type === "success") {
+		line.classList.add("log-success");
+		line.textContent = stamp + "ERFOLG: " + text;
+	} else if (type === "warn") {
+		line.classList.add("log-warn");
+		line.textContent = stamp + "WARNUNG: " + text;
+	} else if (type === "error") {
+		line.classList.add("log-error");
+		line.textContent = stamp + "ALARM: " + text;
+	} else {
+		line.classList.add("log-info");
+		line.textContent = stamp + "SYS: " + text;
+	}
+
+	logsContainer.appendChild(line);
+	
+	// Automatisch scrollen (Flex-direction column-reverse kümmert sich um Orientierung, 
+	// aber wir stellen sicher, dass das letzte Element eingesehen werden kann)
+	const consoleBody = logsContainer.parentElement;
+	consoleBody.scrollTop = consoleBody.scrollHeight;
+}
+
+// ==========================================
+// SUPABASE / STORAGE LEADERBOARD ENGINE
+// ==========================================
+
+// Bestenliste abrufen und darstellen
+async function fetchLeaderboard() {
+	const container = document.getElementById("leaderboard-body");
+	if (!container) return;
+
+	try {
+		let data = [];
+
+		if (supabase) {
+			// ==========================================
+			// DATENBANK-ABFRAGE (SUPABASE AKTIV)
+			// ==========================================
+			// Ruft die 5 besten Einträge geordnet nach Score ab.
+			const { data: dbData, error } = await supabase
+				.from("highscores")
+				.select("username, score, created_at")
+				.order("score", { ascending: false })
+				.limit(5);
+
+			if (error) throw error;
+			data = dbData || [];
+			console.log("[SUPABASE] Leaderboard geladen:", data);
+		} else {
+			// ==========================================
+			// OFFLINE FALLBACK (LOCAL STORAGE)
+			// ==========================================
+			const localRaw = localStorage.getItem("highscores");
+			const localList = localRaw ? JSON.parse(localRaw) : [];
+			// Sortieren nach Score absteigend und limitieren auf 5
+			localList.sort((a, b) => b.score - a.score);
+			data = localList.slice(0, 5);
+			console.log("[STORAGE] Offline-Leaderboard geladen:", data);
+		}
+
+		// Liste im HTML befüllen
+		renderLeaderboardHTML(data);
+
+	} catch (err) {
+		console.error("Fehler beim Laden der Bestenliste:", err);
+		container.innerHTML = `<div class="empty-leaderboard glowing-text-pink">VERBINDUNGS-TIMEOUT. FEHLERBEHEBUNG LÄUFT...</div>`;
+	}
+}
+
+// Highscore speichern (Datenbank oder lokal)
+async function saveHighscore(name, score) {
+	try {
+		const created_at = new Date().toISOString();
+		
+		if (supabase) {
+			// ==========================================
+			// DATENBANK-EINTRAG (SUPABASE AKTIV)
+			// ==========================================
+			// Schreibt einen neuen Score in die "highscores" Tabelle.
+			const { error } = await supabase
+				.from("highscores")
+				.insert([{ username: name, score: score }]);
+
+			if (error) throw error;
+			console.log("[SUPABASE] Highscore erfolgreich gespeichert.");
+		} else {
+			// ==========================================
+			// OFFLINE SPEICHERUNG (LOCAL STORAGE)
+			// ==========================================
+			const localRaw = localStorage.getItem("highscores");
+			const localList = localRaw ? JSON.parse(localRaw) : [];
+			localList.push({ username: name, score: score, created_at: created_at });
+			localStorage.setItem("highscores", JSON.stringify(localList));
+			console.log("[STORAGE] Highscore lokal gespeichert.");
+		}
+	} catch (err) {
+		console.error("Fehler beim Speichern des Highscores:", err);
+	}
+}
+
+// Hilfsfunktion: Bestenlisten HTML erzeugen
+function renderLeaderboardHTML(records) {
+	const container = document.getElementById("leaderboard-body");
+	if (!container) return;
+
+	if (records.length === 0) {
+		container.innerHTML = `<div class="empty-leaderboard">// KEINE EINTRAEGE IN KNOTEN-DATENBANK</div>`;
 		return;
 	}
 
-	// 2. Defeat check: Have we run out of security clearances (guesses)?
-	if (GameState.remainingGuesses <= 0) {
-		triggerLoseState();
-		return;
+	container.innerHTML = "";
+	records.forEach((rec, idx) => {
+		const row = document.createElement("div");
+		row.classList.add("table-row", "db-row");
+
+		// Datum formatieren
+		let dateFormatted = "NEULICH";
+		if (rec.created_at) {
+			const d = new Date(rec.created_at);
+			const day = String(d.getDate()).padStart(2, '0');
+			const month = String(d.getMonth() + 1).padStart(2, '0');
+			const year = String(d.getFullYear()).slice(-2);
+			dateFormatted = `${day}.${month}.${year}`;
+		}
+
+		row.innerHTML = `
+			<span class="db-rank">#0${idx + 1}</span>
+			<span class="db-agent">${escapeHTML(rec.username)}</span>
+			<span class="db-score glowing-text-cyan">${rec.score}</span>
+			<span class="db-date">${dateFormatted}</span>
+		`;
+		container.appendChild(row);
+	});
+}
+
+function escapeHTML(str) {
+	return str.replace(/[&<>'"]/g, 
+		tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+	);
+}
+
+// ==========================================
+// AUDIO SYNTHESIZER ENGINE (Web Audio API)
+// ==========================================
+function initAudioContext() {
+	if (!audioCtx) {
+		const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+		audioCtx = new AudioContextClass();
 	}
-};
+}
 
-// Process character guess entry
-const processGuess = (letter) => {
-	if (GameState.isGameOver || GameState.guessedLetters.has(letter)) return;
-
-	AudioSynth.play('keypress');
-	GameState.guessedLetters.add(letter);
-
-	// Select matching visual DOM button and lock state
-	const btn = DOM.keyboard.querySelector(`.kbd-key[data-key="${letter}"]`);
-
-	if (GameState.secretWord.includes(letter)) {
-		// CORRECT ENTRY
-		if (btn) btn.classList.add('correct');
-		AudioSynth.play('correct');
-		TerminalLog.print(`SECTOR DECRYPTED: SYMBOL "${letter}" CONFIRMED`, 'success');
-		
-		renderWordProgress();
-		triggerScreenGlitch(false);
-	} else {
-		// INCORRECT ENTRY
-		if (btn) btn.classList.add('incorrect');
-		AudioSynth.play('wrong');
-		
-		// Subtract guess, trigger assembly of next hangman gallows block
-		const partIdx = GameState.attemptsMax - GameState.remainingGuesses;
-		if (partIdx < GALLOWS_ASSEMBLY_ORDER.length) {
-			GALLOWS_ASSEMBLY_ORDER[partIdx].classList.add('assembled');
-		}
-
-		GameState.remainingGuesses--;
-		TerminalLog.print(`DECRYPTION FAILURE: SYMBOL "${letter}" REJECTED`, 'error');
-		
-		updateAttemptsDisplay();
-		triggerScreenGlitch(true);
-	}
-
-	checkGameStatus();
-};
-
-// Visual screen flash/glitch overlay trigger
-const triggerScreenGlitch = (isError) => {
-	DOM.glitchOverlay.className = 'glitch-overlay';
-	DOM.glitchOverlay.classList.add(isError ? 'glitch-active' : 'glitch-active');
-	
-	// Fast flickering remove
-	setTimeout(() => {
-		DOM.glitchOverlay.classList.remove('glitch-active');
-	}, 80);
-};
-
-// Win State Implementation
-const triggerWinState = () => {
-	GameState.isGameOver = true;
-	GameState.streak++;
-	localStorage.setItem('av_streak', GameState.streak);
-	
-	AudioSynth.play('victory');
-	TerminalLog.print(`CORE BYPASS SECURED. SYSTEM DECRYPTED IN ROUND [${GameState.nodeId}]`, 'success');
-
-	// Populate Win statistics into overlay
-	DOM.overlayCard.className = 'overlay-card font-code overlay-success';
-	DOM.overlayTitle.innerText = 'ACCESS GRANTED';
-	DOM.overlaySubtitle.innerText = 'BYPASS NODE SECURED';
-	DOM.revealedWord.innerText = GameState.secretWord;
-	DOM.revealedWord.className = 'revealed-word font-tech glowing-text-green';
-	DOM.overlayNodeId.innerText = GameState.nodeId;
-	DOM.overlayStreak.innerText = `${GameState.streak}x`;
-	
-	const usedGuesses = GameState.attemptsMax - GameState.remainingGuesses;
-	DOM.overlayAttempts.innerText = `${usedGuesses}/6`;
-	DOM.overlayAttempts.className = "glowing-text-green";
-	DOM.restartBtn.innerText = 'BYPASS_NEXT_CORE';
-
-	setTimeout(() => {
-		DOM.gameOverlay.style.display = 'flex';
-	}, 600);
-};
-
-// Lose State Implementation
-const triggerLoseState = () => {
-	GameState.isGameOver = true;
-	GameState.streak = 0;
-	localStorage.setItem('av_streak', GameState.streak);
-
-	AudioSynth.play('defeat');
-	TerminalLog.print(`SYSTEM OVERFLOW: LOCKOUT INITIATED ON NODE [${GameState.nodeId}]`, 'error');
-
-	// Populate Defeat statistics into overlay
-	DOM.overlayCard.className = 'overlay-card font-code overlay-failure';
-	DOM.overlayTitle.innerText = 'SYSTEM LOCKOUT';
-	DOM.overlaySubtitle.innerText = 'INTRUSION TERMINATED';
-	DOM.revealedWord.innerText = GameState.secretWord;
-	DOM.revealedWord.className = 'revealed-word font-tech glowing-text-pink';
-	DOM.overlayNodeId.innerText = GameState.nodeId;
-	DOM.overlayStreak.innerText = '00';
-	
-	DOM.overlayAttempts.innerText = '6/6 (CRITICAL)';
-	DOM.overlayAttempts.className = "glowing-text-pink";
-	DOM.restartBtn.innerText = 'REBOOT_CORE';
-
-	// Highlight the gallows with a flashing neon red shadow overlay
-	DOM.gameOverlay.style.display = 'flex';
-};
-
-// Initializer / Reset core game settings
-const startNewRound = () => {
-	GameState.isGameOver = false;
-	GameState.remainingGuesses = GameState.attemptsMax;
-	GameState.guessedLetters.clear();
-	GameState.randomizeNodeId();
-
-	// Select a random category and word
-	const categories = Object.keys(WORD_DATABASE);
-	const pickedCategory = categories[Math.floor(Math.random() * categories.length)];
-	const words = WORD_DATABASE[pickedCategory];
-	const pickedWord = words[Math.floor(Math.random() * words.length)].toUpperCase();
-
-	GameState.secretWord = pickedWord;
-	GameState.wordCategory = pickedCategory;
-
-	// Reset visual interface components
-	DOM.gameOverlay.style.display = 'none';
-	DOM.nodeCoords.innerText = GameState.nodeId;
-	DOM.streakCounter.innerText = String(GameState.streak).padStart(2, '0');
-	DOM.categoryTag.innerText = `SECTOR_NODE: ${pickedCategory}`;
-	
-	// Reset Gallows Vector Parts
-	GALLOWS_ASSEMBLY_ORDER.forEach(part => {
-		part.classList.remove('assembled');
-	});
-
-	// Reset Keyboard Keys
-	const keys = DOM.keyboard.querySelectorAll('.kbd-key');
-	keys.forEach(key => {
-		key.className = 'kbd-key';
-	});
-
-	// Draw blank letter inputs and attempts indicators
-	renderWordProgress();
-	updateAttemptsDisplay();
-
-	// Print diagnostics output log initialization sequences
-	TerminalLog.clear();
-	TerminalLog.print(`AV-DEC-CORE: ESTABLISHING QUANTUM LINK...`, 'info');
-	TerminalLog.print(`SECTOR NODE: BINDING TO PORT [${GameState.nodeId}]`, 'info');
-	TerminalLog.print(`DIAGNOSTIC: MULTIPLIER CORE SYNCED AT [${GameState.streak}x]`, 'info');
-	TerminalLog.print(`SECURITY SHIELD ACTIVE. LOCKOUT THRESHOLD: 6 RETRIES`, 'warn');
-	TerminalLog.print(`DECRYPTION TARGET SECURED. START TRANSMISSION...`, 'success');
-};
-
-// --- BROWSER INTERACTIVE HANDLERS ---
-
-const setupInputListeners = () => {
-	// 1. Virtual Keyboard click events
-	DOM.keyboard.addEventListener('click', (e) => {
-		const keyBtn = e.target.closest('.kbd-key');
-		if (!keyBtn) return;
-		
-		const char = keyBtn.dataset.key;
-		if (char && /^[A-Z]$/.test(char)) {
-			processGuess(char);
-		}
-	});
-
-	// 2. Physical hardware key listeners
-	window.addEventListener('keydown', (e) => {
-		// Ignore keys if input fields or screen overlays are active, or if modifiers (Ctrl, Cmd) are pressed
-		if (e.ctrlKey || e.metaKey || e.altKey) return;
-		
-		const char = e.key.toUpperCase();
-		if (/^[A-Z]$/.test(char)) {
-			// Find on-screen key matching physical layout to trigger active hover presses
-			const btn = DOM.keyboard.querySelector(`.kbd-key[data-key="${char}"]`);
-			if (btn && !btn.classList.contains('correct') && !btn.classList.contains('incorrect') && !GameState.isGameOver) {
-				btn.classList.add('physical-pressed');
-				processGuess(char);
-			}
-		}
-	});
-
-	window.addEventListener('keyup', (e) => {
-		const char = e.key.toUpperCase();
-		if (/^[A-Z]$/.test(char)) {
-			const btn = DOM.keyboard.querySelector(`.kbd-key[data-key="${char}"]`);
-			if (btn) {
-				btn.classList.remove('physical-pressed');
-			}
-		}
-	});
-
-	// 3. Restart Bypass/Reboot buttons
-	DOM.restartBtn.addEventListener('click', () => {
-		AudioSynth.play('keypress');
-		startNewRound();
-	});
-
-	// 4. Sound Control toggle button
-	DOM.audioToggle.addEventListener('click', () => {
-		const isNowMuted = AudioSynth.toggleMute();
-		if (isNowMuted) {
-			DOM.audioToggle.className = 'terminal-btn audio-toggle audio-muted';
-			DOM.audioToggle.innerText = '🔇 SOUND_OFF';
+function toggleAudioState() {
+	isAudioMuted = !isAudioMuted;
+	const btn = document.getElementById("audio-toggle");
+	if (btn) {
+		if (isAudioMuted) {
+			btn.innerHTML = `<span class="audio-icon font-tech">🔇 TON_AUS</span>`;
+			btn.classList.add("audio-muted");
 		} else {
-			// Initiate audio framework block on click
-			AudioSynth.init();
-			AudioSynth.play('keypress');
-			DOM.audioToggle.className = 'terminal-btn audio-toggle';
-			DOM.audioToggle.innerText = '🔊 SOUND_ON';
+			btn.innerHTML = `<span class="audio-icon font-tech">🔊 TON_AN</span>`;
+			btn.classList.remove("audio-muted");
 		}
-	});
-};
+	}
+}
 
-// Periodic simulated visual telemetry logs
-const startTelemetryUpdates = () => {
-	// Telemetry Clock time update
-	setInterval(() => {
-		const timeStr = new Date().toLocaleTimeString('en-US', { hour12: false });
-		DOM.time.innerText = timeStr;
-	}, 1000);
+function playSynthesizedSound(type) {
+	if (isAudioMuted || !audioCtx) return;
 
-	// Diagnostic Latency generator to feel alive
-	setInterval(() => {
-		if (GameState.isGameOver) return;
-		const randLatency = Math.floor(Math.random() * 8) + 8;
-		DOM.matrixLatency.innerText = `${randLatency}ms`;
-	}, 3000);
-};
-
-// Initial Entry Point
-window.addEventListener('DOMContentLoaded', () => {
-	// Sync Audio toggler layout button on load
-	if (AudioSynth.getMuteState()) {
-		DOM.audioToggle.className = 'terminal-btn audio-toggle audio-muted';
-		DOM.audioToggle.innerText = '🔇 SOUND_OFF';
-	} else {
-		DOM.audioToggle.className = 'terminal-btn audio-toggle';
-		DOM.audioToggle.innerText = '🔊 SOUND_ON';
+	// Sicherstellen, dass der Context nicht gesperrt ist (Browser-Sicherheit)
+	if (audioCtx.state === "suspended") {
+		audioCtx.resume();
 	}
 
-	// Launch beautiful grid rendering and event loops
-	CanvasGrid.init();
-	setupInputListeners();
-	startTelemetryUpdates();
-	startNewRound();
-});
+	const now = audioCtx.currentTime;
+
+	if (type === "correct") {
+		// Steigender angenehmer 8-Bit Akkord
+		const osc = audioCtx.createOscillator();
+		const gain = audioCtx.createGain();
+		osc.type = "sine";
+
+		osc.frequency.setValueAtTime(440, now); // A4
+		osc.frequency.exponentialRampToValueAtTime(880, now + 0.15); // A5
+
+		gain.gain.setValueAtTime(0.08, now);
+		gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+
+		osc.connect(gain);
+		gain.connect(audioCtx.destination);
+		osc.start(now);
+		osc.stop(now + 0.18);
+	} 
+	else if (type === "wrong") {
+		// Dissonanter tiefer Puls
+		const osc1 = audioCtx.createOscillator();
+		const osc2 = audioCtx.createOscillator();
+		const gain = audioCtx.createGain();
+
+		osc1.type = "sawtooth";
+		osc2.type = "triangle";
+
+		osc1.frequency.setValueAtTime(130, now); // C3
+		osc2.frequency.setValueAtTime(135, now); // Dissonanter Schwebeton
+
+		gain.gain.setValueAtTime(0.12, now);
+		gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+
+		osc1.connect(gain);
+		osc2.connect(gain);
+		gain.connect(audioCtx.destination);
+
+		osc1.start(now);
+		osc2.start(now);
+		osc1.stop(now + 0.25);
+		osc2.stop(now + 0.25);
+	} 
+	else if (type === "error") {
+		// Kurzer Warnpuls für die Tastatur-Validierung
+		const osc = audioCtx.createOscillator();
+		const gain = audioCtx.createGain();
+
+		osc.type = "square";
+		osc.frequency.setValueAtTime(90, now);
+
+		gain.gain.setValueAtTime(0.15, now);
+		gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+		osc.connect(gain);
+		gain.connect(audioCtx.destination);
+
+		osc.start(now);
+		osc.stop(now + 0.12);
+	}
+	else if (type === "victory") {
+		// Fröhliche 8-Bit Tonleiter-Melodie
+		const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+		notes.forEach((freq, idx) => {
+			const osc = audioCtx.createOscillator();
+			const gain = audioCtx.createGain();
+			osc.type = "sine";
+			osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+
+			gain.gain.setValueAtTime(0.08, now + idx * 0.08);
+			gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.15);
+
+			osc.connect(gain);
+			gain.connect(audioCtx.destination);
+			osc.start(now + idx * 0.08);
+			osc.stop(now + idx * 0.08 + 0.15);
+		});
+	} 
+	else if (type === "defeat") {
+		// Abfallender tiefer Brumm-Ton (Sperrungs-Drone)
+		const osc = audioCtx.createOscillator();
+		const gain = audioCtx.createGain();
+
+		osc.type = "sawtooth";
+		osc.frequency.setValueAtTime(220, now);
+		osc.frequency.exponentialRampToValueAtTime(55, now + 1.2);
+
+		gain.gain.setValueAtTime(0.18, now);
+		gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+
+		osc.connect(gain);
+		gain.connect(audioCtx.destination);
+		osc.start(now);
+		osc.stop(now + 1.2);
+	}
+}
+
+// ==========================================
+// PROCEDURAL SYNTHWAVE GRID BACKGROUND
+// ==========================================
+function initBackgroundGrid() {
+	const canvas = document.getElementById("grid-canvas");
+	if (!canvas) return;
+
+	const ctx = canvas.getContext("2d");
+	let width = canvas.width = window.innerWidth;
+	let height = canvas.height = window.innerHeight;
+
+	window.addEventListener("resize", () => {
+		if (canvas) {
+			width = canvas.width = window.innerWidth;
+			height = canvas.height = window.innerHeight;
+		}
+	});
+
+	let speed = 0.5;
+	let offset = 0;
+
+	function animate() {
+		ctx.clearRect(0, 0, width, height);
+
+		ctx.strokeStyle = "rgba(0, 240, 255, 0.06)";
+		ctx.lineWidth = 1;
+
+		const horizon = height * 0.65;
+		const verticalLines = 36;
+		
+		// 1. Vertikale perspektivische Rasterlinien zeichnen
+		for (let i = 0; i <= verticalLines; i++) {
+			const xStart = (i - verticalLines / 2) * (width / 8) + (width / 2);
+			ctx.beginPath();
+			ctx.moveTo(width / 2, horizon);
+			ctx.lineTo(xStart, height);
+			ctx.stroke();
+		}
+
+		// 2. Horizontale Rasterlinien (Animiert auf den Betrachter zu)
+		offset += speed;
+		if (offset >= 40) offset = 0;
+
+		let y = horizon;
+		let distance = 0;
+		while (y < height) {
+			// Perspektivischer Abstandsstauchungsfaktor
+			distance = (y - horizon) + offset;
+			const currentY = horizon + Math.pow(distance / (height - horizon), 1.6) * (height - horizon);
+
+			if (currentY <= height) {
+				ctx.beginPath();
+				ctx.moveTo(0, currentY);
+				ctx.lineTo(width, currentY);
+				ctx.stroke();
+			}
+			y += 24;
+		}
+
+		requestAnimationFrame(animate);
+	}
+
+	animate();
+}
