@@ -125,40 +125,40 @@ export default function GameScreen({ category, onGameEnd, onAbort }: Props) {
   if (!gameWord) return null;
 
   return (
-    <div className="flex flex-col gap-8 pb-12">
+    <div className="flex flex-col gap-3 pb-4">
       {/* Game Header Stats */}
-      <div className="flex justify-between items-center bg-surface-high/50 p-4 rounded-2xl border border-white/5 backdrop-blur-md">
+      <div className="flex justify-between items-center bg-surface-high/50 p-3 rounded-xl border border-white/5 backdrop-blur-md">
         <button 
           onClick={onAbort}
-          className="flex items-center gap-2 text-on-surface-variant hover:text-on-surface transition-colors font-headline text-xs tracking-widest uppercase"
+          className="flex items-center gap-1 text-on-surface-variant hover:text-on-surface transition-colors font-headline text-xs tracking-wider uppercase"
         >
-          <ChevronLeft className="w-4 h-4" /> Abort
+          <ChevronLeft className="w-3.5 h-3.5" /> Abort
         </button>
 
-        <div className="flex items-center gap-6">
-          <div className={`flex flex-col items-center px-4 py-1 rounded-xl border border-white/10 ${timeLeft < 30 ? 'bg-red-500/10 border-red-500/30' : 'bg-surface'}`}>
-            <span className="font-headline text-on-surface-variant text-[9px] tracking-widest uppercase">TTL Remaining</span>
-            <span className={`font-headline font-bold text-xl ${timeLeft < 30 ? 'text-red-500 animate-pulse' : 'text-secondary'}`}>
+        <div className="flex items-center gap-4">
+          <div className={`flex flex-col items-center px-3 py-0.5 rounded-lg border border-white/10 ${timeLeft < 30 ? 'bg-red-500/10 border-red-500/30' : 'bg-surface'}`}>
+            <span className="font-headline text-on-surface-variant text-[8px] tracking-wider uppercase">TTL Remaining</span>
+            <span className={`font-headline font-bold text-base ${timeLeft < 30 ? 'text-red-500 animate-pulse' : 'text-secondary'}`}>
               00:{formatTime(timeLeft)}
             </span>
           </div>
-          <div className="flex flex-col items-center px-4 py-1 rounded-xl bg-surface border border-white/10">
-            <span className="font-headline text-on-surface-variant text-[9px] tracking-widest uppercase">System Integrity</span>
-            <span className={`font-headline font-bold text-xl ${wrongGuesses.length > 4 ? 'text-orange-500' : 'text-primary'}`}>
+          <div className="flex flex-col items-center px-3 py-0.5 rounded-lg bg-surface border border-white/10">
+            <span className="font-headline text-on-surface-variant text-[8px] tracking-wider uppercase">System Integrity</span>
+            <span className={`font-headline font-bold text-base ${wrongGuesses.length > 4 ? 'text-orange-500' : 'text-primary'}`}>
               {(100 - (wrongGuesses.length * 16.6)).toFixed(0)}%
             </span>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-start">
         {/* Left Column: Visualizer */}
-        <div className="lg:col-span-5 flex flex-col gap-6">
-          <div className="bg-surface rounded-3xl p-8 aspect-square flex flex-col items-center justify-center relative overflow-hidden border border-white/5 shadow-2xl">
+        <div className="lg:col-span-5 flex flex-col gap-3">
+          <div className="bg-surface rounded-2xl p-3 flex flex-col items-center justify-center relative overflow-hidden border border-white/5 shadow-lg h-[160px] md:h-[220px]">
             <div className="absolute inset-0 bg-primary/5 opacity-50 z-0 radial-gradient" />
             
             {/* Stickman SVG */}
-            <svg className="w-full h-full max-w-[280px] z-10 filter drop-shadow-[0_0_12px_rgba(156,255,147,0.4)]" viewBox="0 0 200 200">
+            <svg className="h-[110px] md:h-[150px] z-10 filter drop-shadow-[0_0_8px_rgba(156,255,147,0.4)]" viewBox="0 0 200 200">
               {/* Scaffold */}
               <line stroke="white" strokeOpacity="0.1" strokeWidth="4" x1="20" x2="100" y1="180" y2="180" />
               <line stroke="white" strokeOpacity="0.1" strokeWidth="4" x1="60" x2="60" y1="180" y2="20" />
@@ -181,27 +181,27 @@ export default function GameScreen({ category, onGameEnd, onAbort }: Props) {
               )}
             </svg>
 
-            <div className="mt-8 flex flex-col items-center z-10 w-full px-8">
-              <span className="font-label text-on-surface-variant text-[10px] tracking-[0.3em] uppercase mb-2">Neural Links Remaining</span>
-              <div className="flex gap-2 w-full">
+            <div className="mt-1.5 flex flex-col items-center z-10 w-full px-4">
+              <span className="font-label text-on-surface-variant text-[9px] tracking-widest uppercase mb-1">Neural Links Remaining</span>
+              <div className="flex gap-1 w-full max-w-[180px]">
                 {[...Array(MAX_GUESSES)].map((_, i) => (
-                  <div key={i} className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${i < (MAX_GUESSES - wrongGuesses.length) ? 'bg-primary shadow-[0_0_8px_#9cff93]' : 'bg-white/10'}`} />
+                  <div key={i} className={`h-1 flex-1 rounded-full transition-all duration-500 ${i < (MAX_GUESSES - wrongGuesses.length) ? 'bg-primary shadow-[0_0_6px_#9cff93]' : 'bg-white/10'}`} />
                 ))}
               </div>
             </div>
           </div>
 
-          <div className="bg-surface-high rounded-2xl p-5 border border-white/5">
-             <span className="font-label text-on-surface-variant text-[10px] tracking-widest uppercase mb-3 block">Incorrect Data Packets</span>
-             <div className="flex flex-wrap gap-2">
+          <div className="bg-surface-high rounded-xl p-3 border border-white/5">
+             <span className="font-label text-on-surface-variant text-[9px] tracking-widest uppercase mb-1.5 block">Incorrect Data Packets</span>
+             <div className="flex flex-wrap gap-1.5">
                 {wrongGuesses.length === 0 ? (
-                  <span className="text-[10px] text-on-surface-variant/40 font-headline uppercase tracking-widest italic py-1">No integrity breaches found...</span>
+                  <span className="text-[9px] text-on-surface-variant/40 font-headline uppercase tracking-widest italic py-0.5">No integrity breaches found...</span>
                 ) : (
                   wrongGuesses.map((l, i) => (
                     <motion.span 
                       initial={{ scale: 0 }} animate={{ scale: 1 }}
                       key={i} 
-                      className="w-8 h-8 rounded bg-red-500/10 border border-red-500/30 text-red-500 flex items-center justify-center font-headline text-sm font-bold"
+                      className="w-6 h-6 rounded bg-red-500/10 border border-red-500/30 text-red-500 flex items-center justify-center font-headline text-xs font-bold"
                     >
                       {l}
                     </motion.span>
@@ -212,58 +212,65 @@ export default function GameScreen({ category, onGameEnd, onAbort }: Props) {
         </div>
 
         {/* Right Column: Game Area */}
-        <div className="lg:col-span-7 flex flex-col gap-6">
+        <div className="lg:col-span-7 flex flex-col gap-3">
           {/* Word Panel */}
-          <div className="bg-surface-high rounded-3xl p-8 border-l-4 border-secondary shadow-xl relative overflow-hidden">
+          <div className="bg-surface-high rounded-2xl p-4 border-l-4 border-secondary shadow-lg relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-5 rotate-12 pointer-events-none">
-              <Zap className="w-32 h-32" />
+              <Zap className="w-24 h-24" />
             </div>
             
             <div className="relative z-10">
-              <span className="font-label text-secondary text-xs font-bold tracking-[0.2em] uppercase">PROTOCOL: {category}</span>
-              <div className="flex flex-wrap gap-3 mt-8 mb-8 justify-center">
+              <span className="font-label text-secondary text-[10px] font-bold tracking-widest uppercase">PROTOCOL: {category}</span>
+              <div className="flex flex-wrap gap-1.5 md:gap-3 mt-4 mb-4 justify-center w-full">
                 {word.split('').map((letter, idx) => (
-                  <div key={idx} className={`w-10 h-14 md:w-14 md:h-20 flex items-center justify-center rounded-xl transition-all duration-500 ${
-                    letter === ' ' ? 'w-4' : (guessedLetters.includes(letter) ? 'bg-primary/20 border-b-4 border-primary shadow-[0_0_20px_rgba(156,255,147,0.2)]' : 'bg-surface-variant/40 border-b-4 border-secondary/20')
-                  }`}>
-                    {letter !== ' ' && (
-                      <span className={`font-headline text-2xl md:text-4xl font-black ${guessedLetters.includes(letter) ? 'text-primary' : 'opacity-0'}`}>
+                  letter === ' ' ? (
+                    <div key={idx} className="w-2 md:w-4" />
+                  ) : (
+                    <div 
+                      key={idx} 
+                      className={`flex-1 min-w-[28px] max-w-[36px] md:max-w-[48px] aspect-[3/4] flex items-center justify-center rounded-lg md:rounded-xl transition-all duration-500 ${
+                        guessedLetters.includes(letter) 
+                          ? 'bg-primary/20 border-b-2 md:border-b-4 border-primary shadow-[0_0_12px_rgba(156,255,147,0.2)]' 
+                          : 'bg-surface-variant/40 border-b-2 md:border-b-4 border-secondary/20'
+                      }`}
+                    >
+                      <span className={`font-headline text-lg md:text-2xl font-black ${guessedLetters.includes(letter) ? 'text-primary' : 'opacity-0'}`}>
                         {letter}
                       </span>
-                    )}
-                  </div>
+                    </div>
+                  )
                 ))}
               </div>
 
-              <div className="mt-8 border-t border-white/5 pt-6 space-y-4">
-                <div className="flex flex-wrap items-center gap-4 justify-between">
-                  <div className="flex flex-wrap items-center gap-3">
+              <div className="mt-4 border-t border-white/5 pt-3 space-y-3">
+                <div className="flex flex-wrap items-center gap-2.5 justify-between">
+                  <div className="flex flex-wrap items-center gap-2">
                     <button 
                       onClick={handleUseHint}
-                      className={`flex items-center gap-3 px-6 py-2.5 rounded-full transition-all text-xs font-headline font-bold tracking-widest ${
+                      className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all text-[11px] font-headline font-bold tracking-widest ${
                         hintsUsed >= 3 
                           ? 'bg-white/5 text-on-surface-variant/40 border border-white/5 cursor-not-allowed' 
-                          : 'bg-secondary hover:bg-secondary-dim text-background shadow-[0_0_20px_rgba(0,227,253,0.3)] active:scale-95'
+                          : 'bg-secondary hover:bg-secondary-dim text-background shadow-[0_0_15px_rgba(0,227,253,0.25)] active:scale-95'
                       }`}
                       disabled={hintsUsed >= 3 || isWon || isLost}
                     >
-                      <Lightbulb className={`w-4 h-4 ${hintsUsed < 3 && !isWon && !isLost ? 'animate-pulse' : ''}`} />
+                      <Lightbulb className={`w-3.5 h-3.5 ${hintsUsed < 3 && !isWon && !isLost ? 'animate-pulse' : ''}`} />
                       Hinweis verwenden
                     </button>
                     
                     {hintsUsed >= 3 ? (
-                      <span className="font-headline text-xs text-red-400 font-bold uppercase tracking-wider animate-pulse">
-                        Keine Hinweise mehr verfügbar!
+                      <span className="font-headline text-[11px] text-red-400 font-bold uppercase tracking-wider animate-pulse">
+                        Keine Hinweise mehr!
                       </span>
                     ) : (
-                      <span className="font-headline text-xs text-on-surface-variant uppercase tracking-wider">
-                        Hinweise übrig: <span className="text-secondary font-bold">{3 - hintsUsed} / 3</span>
+                      <span className="font-headline text-[11px] text-on-surface-variant uppercase tracking-wider">
+                        Hinweise: <span className="text-secondary font-bold">{3 - hintsUsed} / 3</span>
                       </span>
                     )}
                   </div>
                   
-                  <div className="text-[10px] font-headline text-on-surface-variant uppercase tracking-widest bg-background/50 px-3 py-1 rounded-md border border-white/5">
-                    Kosten pro Hinweis: <span className="text-red-400 font-bold">150 Pkt</span>
+                  <div className="text-[9px] font-headline text-on-surface-variant uppercase tracking-widest bg-background/50 px-2 py-0.5 rounded border border-white/5">
+                    Kosten: <span className="text-red-400 font-bold">150 Pkt</span>
                   </div>
                 </div>
                 
@@ -285,9 +292,9 @@ export default function GameScreen({ category, onGameEnd, onAbort }: Props) {
           </div>
 
           {/* Cyber Keyboard */}
-          <div className="flex flex-col gap-3 mt-auto">
+          <div className="flex flex-col gap-1.5 md:gap-3 mt-auto">
             {keyboardRows.map((row, i) => (
-              <div key={i} className="flex justify-center gap-2">
+              <div key={i} className="flex justify-center gap-1 md:gap-2">
                 {row.map(letter => {
                   const isGuessed = guessedLetters.includes(letter);
                   const isCorrect = isGuessed && word.includes(letter);
@@ -299,8 +306,8 @@ export default function GameScreen({ category, onGameEnd, onAbort }: Props) {
                       whileTap={{ scale: 0.9 }}
                       onClick={() => handleGuess(letter)}
                       disabled={isGuessed}
-                      className={`w-9 h-12 md:w-12 md:h-16 rounded-xl font-headline font-black text-lg md:text-xl transition-all duration-300 border ${
-                        isCorrect ? 'bg-primary text-background border-primary shadow-[0_0_15px_#9cff93]' :
+                      className={`w-7 h-10 min-w-[26px] max-w-[42px] md:w-11 md:h-14 rounded-lg md:rounded-xl font-headline font-black text-sm md:text-lg transition-all duration-300 border ${
+                        isCorrect ? 'bg-primary text-background border-primary shadow-[0_0_12px_#9cff93]' :
                         isWrong ? 'bg-red-500/10 text-red-500/40 border-red-500/20 grayscale' :
                         'bg-surface-high hover:bg-secondary hover:text-background border-white/10 text-on-surface'
                       }`}
