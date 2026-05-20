@@ -125,7 +125,7 @@ export default function GameScreen({ category, onGameEnd, onAbort }: Props) {
   if (!gameWord) return null;
 
   return (
-    <div className="flex flex-col gap-3 pb-4">
+    <div className="flex flex-col gap-2 md:gap-4 pb-4 w-full max-w-5xl mx-auto h-full justify-center">
       {/* Game Header Stats */}
       <div className="flex justify-between items-center bg-surface-high/50 p-3 rounded-xl border border-white/5 backdrop-blur-md">
         <button 
@@ -154,11 +154,11 @@ export default function GameScreen({ category, onGameEnd, onAbort }: Props) {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-start">
         {/* Left Column: Visualizer */}
         <div className="lg:col-span-5 flex flex-col gap-3">
-          <div className="bg-surface rounded-2xl p-3 flex flex-col items-center justify-center relative overflow-hidden border border-white/5 shadow-lg h-[160px] md:h-[220px]">
+          <div className="bg-surface rounded-2xl p-2 md:p-3 flex flex-col items-center justify-center relative overflow-hidden border border-white/5 shadow-lg h-[140px] md:h-[200px]">
             <div className="absolute inset-0 bg-primary/5 opacity-50 z-0 radial-gradient" />
             
             {/* Stickman SVG */}
-            <svg className="h-[110px] md:h-[150px] z-10 filter drop-shadow-[0_0_8px_rgba(156,255,147,0.4)]" viewBox="0 0 200 200">
+            <svg className="h-[90px] md:h-[130px] z-10 filter drop-shadow-[0_0_8px_rgba(156,255,147,0.4)]" viewBox="0 0 200 200">
               {/* Scaffold */}
               <line stroke="white" strokeOpacity="0.1" strokeWidth="4" x1="20" x2="100" y1="180" y2="180" />
               <line stroke="white" strokeOpacity="0.1" strokeWidth="4" x1="60" x2="60" y1="180" y2="20" />
@@ -221,20 +221,20 @@ export default function GameScreen({ category, onGameEnd, onAbort }: Props) {
             
             <div className="relative z-10">
               <span className="font-label text-secondary text-[10px] font-bold tracking-widest uppercase">PROTOCOL: {category}</span>
-              <div className="flex flex-wrap gap-1.5 md:gap-3 mt-4 mb-4 justify-center w-full">
+              <div className="flex flex-wrap gap-1 md:gap-2 mt-3 mb-3 justify-center w-full">
                 {word.split('').map((letter, idx) => (
                   letter === ' ' ? (
-                    <div key={idx} className="w-2 md:w-4" />
+                    <div key={idx} className="w-2 md:w-3" />
                   ) : (
                     <div 
                       key={idx} 
-                      className={`flex-1 min-w-[28px] max-w-[36px] md:max-w-[48px] aspect-[3/4] flex items-center justify-center rounded-lg md:rounded-xl transition-all duration-500 ${
+                      className={`flex-1 min-w-[20px] max-w-[28px] sm:max-w-[36px] md:max-w-[44px] aspect-[3/4] flex items-center justify-center rounded md:rounded-lg transition-all duration-500 ${
                         guessedLetters.includes(letter) 
                           ? 'bg-primary/20 border-b-2 md:border-b-4 border-primary shadow-[0_0_12px_rgba(156,255,147,0.2)]' 
                           : 'bg-surface-variant/40 border-b-2 md:border-b-4 border-secondary/20'
                       }`}
                     >
-                      <span className={`font-headline text-lg md:text-2xl font-black ${guessedLetters.includes(letter) ? 'text-primary' : 'opacity-0'}`}>
+                      <span className={`font-headline text-base sm:text-lg md:text-xl font-bold ${guessedLetters.includes(letter) ? 'text-primary' : 'opacity-0'}`}>
                         {letter}
                       </span>
                     </div>
@@ -292,9 +292,9 @@ export default function GameScreen({ category, onGameEnd, onAbort }: Props) {
           </div>
 
           {/* Cyber Keyboard */}
-          <div className="flex flex-col gap-1.5 md:gap-3 mt-auto">
+          <div className="flex flex-col gap-1.5 md:gap-2 mt-auto">
             {keyboardRows.map((row, i) => (
-              <div key={i} className="flex justify-center gap-1 md:gap-2">
+              <div key={i} className="flex justify-center gap-1 md:gap-1.5">
                 {row.map(letter => {
                   const isGuessed = guessedLetters.includes(letter);
                   const isCorrect = isGuessed && word.includes(letter);
@@ -306,7 +306,7 @@ export default function GameScreen({ category, onGameEnd, onAbort }: Props) {
                       whileTap={{ scale: 0.9 }}
                       onClick={() => handleGuess(letter)}
                       disabled={isGuessed}
-                      className={`w-7 h-10 min-w-[26px] max-w-[42px] md:w-11 md:h-14 rounded-lg md:rounded-xl font-headline font-black text-sm md:text-lg transition-all duration-300 border ${
+                      className={`w-7 h-10 min-w-[24px] sm:min-w-[28px] md:min-w-[36px] md:w-10 md:h-12 rounded-lg font-headline font-bold text-xs sm:text-sm md:text-base transition-all duration-300 border ${
                         isCorrect ? 'bg-primary text-background border-primary shadow-[0_0_12px_#9cff93]' :
                         isWrong ? 'bg-red-500/10 text-red-500/40 border-red-500/20 grayscale' :
                         'bg-surface-high hover:bg-secondary hover:text-background border-white/10 text-on-surface'

@@ -197,7 +197,7 @@ export default function App() {
       <nav className="w-full flex justify-around items-center px-3 py-1.5 bg-background/95 backdrop-blur-2xl border-t border-white/10 rounded-t-2xl shadow-[0_-10px_30px_rgba(0,0,0,0.5)] relative z-20 shrink-0">
         <button 
           onClick={() => { setActiveTab('GAME'); if (gameStatus === 'SELECTING') setGameStatus('SELECTING'); }}
-          className={`flex flex-col items-center justify-center px-4 py-1 rounded-full transition-all duration-300 ${activeTab === 'GAME' ? 'bg-primary/10 text-primary ring-1 ring-primary/30 shadow-[0_0_15px_rgba(156,255,147,0.15)]' : 'text-on-surface-variant hover:text-on-surface'}`}
+          className={`flex flex-col items-center justify-center px-2 md:px-4 py-1 rounded-full transition-all duration-300 ${activeTab === 'GAME' ? 'bg-primary/10 text-primary ring-1 ring-primary/30 shadow-[0_0_15px_rgba(156,255,147,0.15)]' : 'text-on-surface-variant hover:text-on-surface'}`}
         >
           <Gamepad2 className="w-5 h-5 mb-0.5" />
           <span className="font-headline text-[8px] font-bold uppercase tracking-widest">GAME</span>
@@ -205,7 +205,7 @@ export default function App() {
 
         <button 
           onClick={() => setActiveTab('CATEGORIES')}
-          className={`flex flex-col items-center justify-center px-4 py-1 rounded-full transition-all duration-300 ${activeTab === 'CATEGORIES' ? 'bg-secondary/10 text-secondary ring-1 ring-secondary/30 shadow-[0_0_15px_rgba(0,227,253,0.15)]' : 'text-on-surface-variant hover:text-on-surface'}`}
+          className={`flex flex-col items-center justify-center px-2 md:px-4 py-1 rounded-full transition-all duration-300 ${activeTab === 'CATEGORIES' ? 'bg-secondary/10 text-secondary ring-1 ring-secondary/30 shadow-[0_0_15px_rgba(0,227,253,0.15)]' : 'text-on-surface-variant hover:text-on-surface'}`}
         >
           <LayoutGrid className="w-5 h-5 mb-0.5" />
           <span className="font-headline text-[8px] font-bold uppercase tracking-widest">PROTOCOLS</span>
@@ -213,7 +213,7 @@ export default function App() {
 
         <button 
           onClick={() => setActiveTab('LEADERBOARD')}
-          className={`flex flex-col items-center justify-center px-4 py-1 rounded-full transition-all duration-300 ${activeTab === 'LEADERBOARD' ? 'bg-tertiary/10 text-tertiary ring-1 ring-tertiary/30 shadow-[0_0_15px_rgba(255,89,227,0.15)]' : 'text-on-surface-variant hover:text-on-surface'}`}
+          className={`flex flex-col items-center justify-center px-2 md:px-4 py-1 rounded-full transition-all duration-300 ${activeTab === 'LEADERBOARD' ? 'bg-tertiary/10 text-tertiary ring-1 ring-tertiary/30 shadow-[0_0_15px_rgba(255,89,227,0.15)]' : 'text-on-surface-variant hover:text-on-surface'}`}
         >
           <Trophy className="w-5 h-5 mb-0.5" />
           <span className="font-headline text-[8px] font-bold uppercase tracking-widest">RANK</span>
@@ -221,7 +221,7 @@ export default function App() {
 
         <button 
           onClick={() => setActiveTab('SETTINGS')}
-          className={`flex flex-col items-center justify-center px-4 py-1 rounded-full transition-all duration-300 ${activeTab === 'SETTINGS' ? 'text-on-surface ring-1 ring-white/10 shadow-[0_0_15px_rgba(255,255,255,0.05)]' : 'text-on-surface-variant hover:text-on-surface'}`}
+          className={`flex flex-col items-center justify-center px-2 md:px-4 py-1 rounded-full transition-all duration-300 ${activeTab === 'SETTINGS' ? 'text-on-surface ring-1 ring-white/10 shadow-[0_0_15px_rgba(255,255,255,0.05)]' : 'text-on-surface-variant hover:text-on-surface'}`}
         >
           <Settings className="w-5 h-5 mb-0.5" />
           <span className="font-headline text-[8px] font-bold uppercase tracking-widest">GEAR</span>

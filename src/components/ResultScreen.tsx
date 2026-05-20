@@ -53,7 +53,7 @@ export default function ResultScreen({ status, result, onPlayAgain }: Props) {
                 initial={{ y: 15, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: idx * 0.04 }}
-                className={`flex-1 min-w-[24px] max-w-[36px] md:max-w-[48px] aspect-[3/4] flex items-center justify-center rounded-lg md:rounded-xl font-headline text-lg md:text-2xl font-black ${
+                className={`flex-1 min-w-[20px] max-w-[28px] sm:max-w-[36px] md:max-w-[44px] aspect-[3/4] flex items-center justify-center rounded md:rounded-lg font-headline text-base sm:text-lg md:text-xl font-black ${
                   isWin ? 'bg-primary text-background shadow-[0_0_12px_rgba(156,255,147,0.4)]' : 'bg-red-500/20 text-red-500 border border-red-500/30'
                 }`}
               >
