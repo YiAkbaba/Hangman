@@ -1,34 +1,32 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  Terminal, 
-  Timer, 
   Lightbulb, 
-  RefreshCw, 
-  Skull,
-  ShieldAlert,
   Zap,
-  ChevronLeft
+  ChevronLeft,
+  ShieldCheck
 } from 'lucide-react';
-import { GameWord } from '../types';
+import { GameWord, Difficulty } from '../types';
 import { GAME_WORDS } from '../constants';
 
 interface Props {
+  round: number;
+  hintsLeft: number;
+  onUseHint: () => void;
   onGameEnd: (result: { success: boolean, score: number, time: string, word: string }) => void;
   onAbort: () => void;
+  isRoundSuccess: boolean;
+  lastWord?: string;
 }
 
 const MAX_GUESSES = 6;
 
-export default function GameScreen({ onGameEnd, onAbort }: Props) {
+export default function GameScreen({ round, hintsLeft, onUseHint, onGameEnd, onAbort, isRoundSuccess, lastWord }: Props) {
   const [gameWord, setGameWord] = useState<GameWord | null>(null);
   const [guessedLetters, setGuessedLetters] = useState<string[]>([]);
   const [timeLeft, setTimeLeft] = useState(180); // 3 minutes
-  const [startTime] = useState(Date.now());
-  const [hintsUsed, setHintsUsed] = useState(0);
+  const [startTime, setStartTime] = useState(Date.now());
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
-
-  const HINT_COST = 150; // Points deducted per hint
 
   // Auto-clear feedback messages after 3 seconds
   useEffect(() => {
@@ -38,18 +36,31 @@ export default function GameScreen({ onGameEnd, onAbort }: Props) {
     }
   }, [feedbackMsg]);
 
-  // Initialize game
+  // Select a word based on the round difficulty
   useEffect(() => {
-    const randomWord = GAME_WORDS[Math.floor(Math.random() * GAME_WORDS.length)];
+    if (isRoundSuccess) return; // Do not select a new word while showing success
+
+    let targetDifficulty: Difficulty = 'EASY';
+    if (round > 2 && round <= 4) targetDifficulty = 'MEDIUM';
+    if (round > 4) targetDifficulty = 'HARD';
+
+    const possibleWords = GAME_WORDS.filter(w => w.difficulty === targetDifficulty);
+    // Fallback to all words if somehow filtered array is empty
+    const wordPool = possibleWords.length > 0 ? possibleWords : GAME_WORDS;
+    
+    const randomWord = wordPool[Math.floor(Math.random() * wordPool.length)];
     setGameWord(randomWord);
-  }, []);
+    setGuessedLetters([]);
+    setTimeLeft(180 - (round > 5 ? 60 : 0)); // Harder rounds have less time (2 mins instead of 3)
+    setStartTime(Date.now());
+  }, [round, isRoundSuccess]);
 
   // Timer logic
   useEffect(() => {
-    if (timeLeft <= 0) return;
+    if (timeLeft <= 0 || isRoundSuccess) return;
     const timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
     return () => clearInterval(timer);
-  }, [timeLeft]);
+  }, [timeLeft, isRoundSuccess]);
 
   const word = gameWord?.word.toUpperCase() || "";
   const wrongGuesses = guessedLetters.filter(l => !word.includes(l));
@@ -57,29 +68,27 @@ export default function GameScreen({ onGameEnd, onAbort }: Props) {
   const isLost = wrongGuesses.length >= MAX_GUESSES || timeLeft <= 0;
 
   useEffect(() => {
-    if (isWon || isLost) {
+    if ((isWon || isLost) && !isRoundSuccess) {
       const durationSeconds = Math.floor((Date.now() - startTime) / 1000);
       const m = Math.floor(durationSeconds / 60);
       const s = durationSeconds % 60;
       const timeStr = `${m}:${s.toString().padStart(2, '0')}`;
       
-      // Calculate prospective score and subtract hint cost (prevent going below 0)
       const baseScore = isWon ? (1000 + (timeLeft * 10)) : 0;
-      const finalScore = Math.max(0, baseScore - (hintsUsed * HINT_COST));
       
       onGameEnd({
         success: isWon,
-        score: finalScore,
+        score: baseScore,
         time: timeStr,
         word: word
       });
     }
-  }, [isWon, isLost, onGameEnd, startTime, timeLeft, word, hintsUsed]);
+  }, [isWon, isLost, onGameEnd, startTime, timeLeft, word, isRoundSuccess]);
 
   const handleGuess = useCallback((letter: string) => {
-    if (guessedLetters.includes(letter) || isWon || isLost) return;
+    if (guessedLetters.includes(letter) || isWon || isLost || isRoundSuccess) return;
     setGuessedLetters(prev => [...prev, letter]);
-  }, [guessedLetters, isWon, isLost]);
+  }, [guessedLetters, isWon, isLost, isRoundSuccess]);
 
   // Keyboard support
   useEffect(() => {
@@ -93,8 +102,8 @@ export default function GameScreen({ onGameEnd, onAbort }: Props) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleGuess]);
 
-  const handleUseHint = () => {
-    if (hintsUsed >= 3 || isWon || isLost) return;
+  const triggerHint = () => {
+    if (hintsLeft <= 0 || isWon || isLost || isRoundSuccess) return;
     
     const uppercaseWord = word.toUpperCase();
     const unrevealedLetters = uppercaseWord.split('').filter(char => char !== ' ' && !guessedLetters.includes(char));
@@ -103,7 +112,7 @@ export default function GameScreen({ onGameEnd, onAbort }: Props) {
     if (uniqueRemaining.length > 0) {
       const randomLetter = uniqueRemaining[Math.floor(Math.random() * uniqueRemaining.length)];
       setGuessedLetters(prev => [...prev, randomLetter]);
-      setHintsUsed(prev => prev + 1);
+      onUseHint();
       setFeedbackMsg(`Buchstabe freigeschaltet: ${randomLetter}`);
     }
   };
@@ -120,6 +129,38 @@ export default function GameScreen({ onGameEnd, onAbort }: Props) {
     ['Z', 'X', 'C', 'V', 'B', 'N', 'M']
   ];
 
+  if (isRoundSuccess) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full w-full max-w-5xl mx-auto pb-8 z-50">
+        <motion.div 
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="bg-surface-high/80 backdrop-blur-md p-10 rounded-3xl border border-primary/30 shadow-[0_0_50px_rgba(156,255,147,0.2)] text-center relative overflow-hidden"
+        >
+          <div className="absolute top-0 right-0 p-8 opacity-10">
+            <ShieldCheck className="w-32 h-32 text-primary" />
+          </div>
+          
+          <h2 className="font-headline text-4xl md:text-6xl font-black text-primary mb-4 uppercase tracking-tighter neon-glow-primary">
+            ROUND CLEARED
+          </h2>
+          <p className="font-body text-lg text-on-surface mb-6 opacity-80 uppercase tracking-widest">
+            {lastWord} entschlüsselt
+          </p>
+          
+          <div className="flex justify-center gap-2 mt-4">
+             <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0ms' }} />
+             <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '150ms' }} />
+             <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '300ms' }} />
+          </div>
+          <p className="text-[10px] text-on-surface-variant font-headline tracking-widest uppercase mt-4 opacity-60">
+            Initialisiere nächste Runde...
+          </p>
+        </motion.div>
+      </div>
+    );
+  }
+
   if (!gameWord) return null;
 
   return (
@@ -134,6 +175,12 @@ export default function GameScreen({ onGameEnd, onAbort }: Props) {
         </button>
 
         <div className="flex items-center gap-4">
+          <div className="flex flex-col items-center px-3 py-0.5 rounded-lg bg-surface border border-white/10">
+             <span className="font-headline text-on-surface-variant text-[8px] tracking-wider uppercase">Runde</span>
+             <span className="font-headline font-bold text-base text-primary">
+               {round}
+             </span>
+          </div>
           <div className={`flex flex-col items-center px-3 py-0.5 rounded-lg border border-white/10 ${timeLeft < 30 ? 'bg-red-500/10 border-red-500/30' : 'bg-surface'}`}>
             <span className="font-headline text-on-surface-variant text-[8px] tracking-wider uppercase">TTL Remaining</span>
             <span className={`font-headline font-bold text-base ${timeLeft < 30 ? 'text-red-500 animate-pulse' : 'text-secondary'}`}>
@@ -212,14 +259,19 @@ export default function GameScreen({ onGameEnd, onAbort }: Props) {
         {/* Right Column: Game Area */}
         <div className="lg:col-span-7 flex flex-col gap-3">
           {/* Word Panel */}
-          <div className="bg-surface-high rounded-2xl p-4 border-l-4 border-secondary shadow-lg relative overflow-hidden">
+          <div className="bg-surface-high rounded-2xl p-4 border-l-4 border-secondary shadow-lg relative overflow-hidden flex-1">
             <div className="absolute top-0 right-0 p-4 opacity-5 rotate-12 pointer-events-none">
               <Zap className="w-24 h-24" />
             </div>
             
-            <div className="relative z-10">
-              <span className="font-label text-secondary text-[10px] font-bold tracking-widest uppercase">PROTOCOL: DECIPHER</span>
-              <div className="flex flex-wrap gap-1 md:gap-2 mt-3 mb-3 justify-center w-full">
+            <div className="relative z-10 flex flex-col h-full">
+              <span className="font-label text-secondary text-[10px] font-bold tracking-widest uppercase">PROTOCOL: DECIPHER (DIFF: {gameWord.difficulty})</span>
+              
+              <div className="text-sm font-body text-on-surface-variant italic mt-2 opacity-80 border-l-2 border-white/10 pl-3 py-1">
+                 "{gameWord.hint}"
+              </div>
+
+              <div className="flex flex-wrap gap-1 md:gap-2 mt-auto mb-auto justify-center w-full py-4">
                 {word.split('').map((letter, idx) => (
                   letter === ' ' ? (
                     <div key={idx} className="w-2 md:w-3" />
@@ -244,25 +296,25 @@ export default function GameScreen({ onGameEnd, onAbort }: Props) {
                 <div className="flex flex-wrap items-center gap-2.5 justify-between">
                   <div className="flex flex-wrap items-center gap-2">
                     <button 
-                      onClick={handleUseHint}
+                      onClick={triggerHint}
                       className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all text-[11px] font-headline font-bold tracking-widest ${
-                        hintsUsed >= 3 
+                        hintsLeft <= 0 
                           ? 'bg-white/5 text-on-surface-variant/40 border border-white/5 cursor-not-allowed' 
                           : 'bg-secondary hover:bg-secondary-dim text-background shadow-[0_0_15px_rgba(0,227,253,0.25)] active:scale-95'
                       }`}
-                      disabled={hintsUsed >= 3 || isWon || isLost}
+                      disabled={hintsLeft <= 0 || isWon || isLost}
                     >
-                      <Lightbulb className={`w-3.5 h-3.5 ${hintsUsed < 3 && !isWon && !isLost ? 'animate-pulse' : ''}`} />
+                      <Lightbulb className={`w-3.5 h-3.5 ${hintsLeft > 0 && !isWon && !isLost ? 'animate-pulse' : ''}`} />
                       Hinweis verwenden
                     </button>
                     
-                    {hintsUsed >= 3 ? (
+                    {hintsLeft <= 0 ? (
                       <span className="font-headline text-[11px] text-red-400 font-bold uppercase tracking-wider animate-pulse">
                         Keine Hinweise mehr!
                       </span>
                     ) : (
                       <span className="font-headline text-[11px] text-on-surface-variant uppercase tracking-wider">
-                        Hinweise: <span className="text-secondary font-bold">{3 - hintsUsed} / 3</span>
+                        Verbleibend: <span className="text-secondary font-bold">{hintsLeft}</span>
                       </span>
                     )}
                   </div>

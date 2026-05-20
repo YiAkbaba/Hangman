@@ -1,12 +1,12 @@
-export type Category = 'TECHNOLOGY' | 'ANIMALS' | 'MOVIES' | 'COUNTRIES';
+export type Difficulty = 'EASY' | 'MEDIUM' | 'HARD';
 
 export interface GameWord {
   word: string;
   hint: string;
-  category: Category;
+  difficulty: Difficulty;
 }
 
-export type GameStatus = 'SELECTING' | 'PLAYING' | 'SUCCESS' | 'FAILED';
+export type GameStatus = 'USERNAME_ENTRY' | 'PLAYING' | 'ROUND_SUCCESS' | 'GAME_OVER';
 
 export interface LeaderboardEntry {
   rank: string;

@@ -3,21 +3,29 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Gamepad2, 
   Trophy, 
-  Terminal
+  Terminal,
+  Zap,
+  Lightbulb
 } from 'lucide-react';
 import UsernameScreen from './components/UsernameScreen';
 import GameScreen from './components/GameScreen';
 import LeaderboardScreen from './components/LeaderboardScreen';
 import ResultScreen from './components/ResultScreen';
+import { GameStatus } from './types';
 
 type ActiveTab = 'GAME' | 'LEADERBOARD';
-type GameStatus = 'USERNAME_ENTRY' | 'PLAYING' | 'SUCCESS' | 'FAILED';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('GAME');
   const [gameStatus, setGameStatus] = useState<GameStatus>('USERNAME_ENTRY');
   const [username, setUsername] = useState<string>('');
   const [score, setScore] = useState(0);
+  
+  // Progression State
+  const [round, setRound] = useState(1);
+  const [multiplier, setMultiplier] = useState(1);
+  const [hintsLeft, setHintsLeft] = useState(3);
+
   const [lastGameResult, setLastGameResult] = useState<{ score: number, time: string, word: string } | null>(null);
 
   // Auto-switch to game tab if playing
@@ -29,13 +37,35 @@ export default function App() {
 
   const handleStartGame = (name: string) => {
     setUsername(name);
+    setScore(0);
+    setRound(1);
+    setMultiplier(1);
+    setHintsLeft(3);
     setGameStatus('PLAYING');
   };
 
   const handleGameEnd = (result: { success: boolean, score: number, time: string, word: string }) => {
     setLastGameResult(result);
-    setScore(prev => prev + result.score);
-    setGameStatus(result.success ? 'SUCCESS' : 'FAILED');
+    if (result.success) {
+      setScore(prev => prev + (result.score * multiplier));
+      setGameStatus('ROUND_SUCCESS');
+      
+      // Automatically advance to the next round after a brief pause
+      setTimeout(() => {
+        setRound(r => r + 1);
+        setMultiplier(m => m * 2);
+        setGameStatus('PLAYING');
+      }, 3000);
+    } else {
+      setGameStatus('GAME_OVER');
+    }
+  };
+
+  const handleUseHint = () => {
+    if (hintsLeft > 0) {
+      setHintsLeft(prev => prev - 1);
+      setScore(prev => Math.max(0, prev - 150));
+    }
   };
 
   const resetGame = () => {
@@ -44,13 +74,15 @@ export default function App() {
   };
 
   const renderContent = () => {
-    if (gameStatus === 'SUCCESS' || gameStatus === 'FAILED') {
+    if (gameStatus === 'GAME_OVER') {
       return (
         <ResultScreen 
-          status={gameStatus} 
+          status="FAILED" 
           result={lastGameResult!} 
           onPlayAgain={resetGame} 
           username={username}
+          finalScore={score}
+          finalRound={round}
         />
       );
     }
@@ -62,8 +94,13 @@ export default function App() {
         }
         return (
           <GameScreen 
+            round={round}
+            hintsLeft={hintsLeft}
+            onUseHint={handleUseHint}
             onGameEnd={handleGameEnd} 
             onAbort={resetGame}
+            isRoundSuccess={gameStatus === 'ROUND_SUCCESS'}
+            lastWord={lastGameResult?.word}
           />
         );
       case 'LEADERBOARD':
@@ -93,7 +130,7 @@ export default function App() {
         </div>
 
         {/* Top Navigation Switch */}
-        <div className="flex bg-surface-high/50 p-1 rounded-full border border-white/10 ring-1 ring-white/5">
+        <div className="flex bg-surface-high/50 p-1 rounded-full border border-white/10 ring-1 ring-white/5 absolute left-1/2 -translate-x-1/2">
           <button
             onClick={() => setActiveTab('GAME')}
             className={`flex items-center gap-2 px-4 py-1.5 rounded-full transition-all duration-300 font-headline text-xs font-bold uppercase tracking-widest ${
@@ -119,6 +156,20 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-3">
+          {gameStatus !== 'USERNAME_ENTRY' && gameStatus !== 'GAME_OVER' && (
+             <div className="hidden md:flex items-center gap-3">
+                <div className="bg-surface-high px-3 py-1 rounded-full border border-white/10 flex items-center gap-1.5">
+                   <Zap className="w-3.5 h-3.5 text-tertiary" />
+                   <span className="font-headline text-[10px] tracking-widest text-on-surface-variant uppercase">Multiplikator:</span>
+                   <span className="text-tertiary font-bold text-xs">x{multiplier}</span>
+                </div>
+                <div className="bg-surface-high px-3 py-1 rounded-full border border-white/10 flex items-center gap-1.5">
+                   <Lightbulb className="w-3.5 h-3.5 text-secondary" />
+                   <span className="font-headline text-[10px] tracking-widest text-on-surface-variant uppercase">Hinweise:</span>
+                   <span className="text-secondary font-bold text-xs">{hintsLeft}</span>
+                </div>
+             </div>
+          )}
           <div className="bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
             <span className="font-headline text-primary font-bold text-xs tracking-tight">SCORE: {score.toLocaleString()}</span>
           </div>
