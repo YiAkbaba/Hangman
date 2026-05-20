@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { motion } from 'motion/react';
 import { 
   Trophy, 
@@ -14,10 +15,33 @@ interface Props {
   status: 'SUCCESS' | 'FAILED';
   result: { score: number, time: string, word: string };
   onPlayAgain: () => void;
+  username: string;
 }
 
-export default function ResultScreen({ status, result, onPlayAgain }: Props) {
-  const isWin = status === 'SUCCESS';  return (
+import { supabase } from '../lib/supabase';
+
+export default function ResultScreen({ status, result, onPlayAgain, username }: Props) {
+  const isWin = status === 'SUCCESS';
+
+  useEffect(() => {
+    async function saveScore() {
+      if (isWin && supabase && username) {
+        try {
+          const { error } = await supabase
+            .from('highscores')
+            .insert([{ username, score: result.score }]);
+          
+          if (error) {
+            console.error('Failed to save score:', error);
+          }
+        } catch (err) {
+          console.error('Error saving score:', err);
+        }
+      }
+    }
+    saveScore();
+  }, [isWin, username, result.score]);
+  return (
     <div className="flex flex-col items-center justify-center py-4 relative">
       <div className="text-center mb-6 relative z-10">
         <motion.div

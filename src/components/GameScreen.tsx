@@ -10,18 +10,17 @@ import {
   Zap,
   ChevronLeft
 } from 'lucide-react';
-import { Category, GameWord } from '../types';
+import { GameWord } from '../types';
 import { GAME_WORDS } from '../constants';
 
 interface Props {
-  category: Category;
   onGameEnd: (result: { success: boolean, score: number, time: string, word: string }) => void;
   onAbort: () => void;
 }
 
 const MAX_GUESSES = 6;
 
-export default function GameScreen({ category, onGameEnd, onAbort }: Props) {
+export default function GameScreen({ onGameEnd, onAbort }: Props) {
   const [gameWord, setGameWord] = useState<GameWord | null>(null);
   const [guessedLetters, setGuessedLetters] = useState<string[]>([]);
   const [timeLeft, setTimeLeft] = useState(180); // 3 minutes
@@ -41,10 +40,9 @@ export default function GameScreen({ category, onGameEnd, onAbort }: Props) {
 
   // Initialize game
   useEffect(() => {
-    const categoryWords = GAME_WORDS.filter(w => w.category === category);
-    const randomWord = categoryWords[Math.floor(Math.random() * categoryWords.length)];
+    const randomWord = GAME_WORDS[Math.floor(Math.random() * GAME_WORDS.length)];
     setGameWord(randomWord);
-  }, [category]);
+  }, []);
 
   // Timer logic
   useEffect(() => {
@@ -220,7 +218,7 @@ export default function GameScreen({ category, onGameEnd, onAbort }: Props) {
             </div>
             
             <div className="relative z-10">
-              <span className="font-label text-secondary text-[10px] font-bold tracking-widest uppercase">PROTOCOL: {category}</span>
+              <span className="font-label text-secondary text-[10px] font-bold tracking-widest uppercase">PROTOCOL: DECIPHER</span>
               <div className="flex flex-wrap gap-1 md:gap-2 mt-3 mb-3 justify-center w-full">
                 {word.split('').map((letter, idx) => (
                   letter === ' ' ? (

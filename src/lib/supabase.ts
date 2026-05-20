@@ -1,0 +1,11 @@
+/// <reference types="vite/client" />
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+
+// Create a single supabase client for interacting with your database
+// If keys are missing, we'll export null so components can fallback to local storage or dummy data
+export const supabase = supabaseUrl && supabaseAnonKey 
+  ? createClient(supabaseUrl, supabaseAnonKey) 
+  : null;
