@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 import { 
   RotateCcw, 
@@ -18,11 +18,13 @@ interface Props {
 }
 
 export default function ResultScreen({ result, onPlayAgain, username, finalScore, finalRound }: Props) {
-  
+  const hasSaved = useRef(false);
+
   useEffect(() => {
     async function saveScore() {
       // We only save the score when the run ends (Game Over)
-      if (supabase && username && finalScore > 0) {
+      if (supabase && username && finalScore > 0 && !hasSaved.current) {
+        hasSaved.current = true;
         try {
           const { error } = await supabase
             .from('highscores')

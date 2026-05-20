@@ -74,6 +74,10 @@ export default function App() {
   };
 
   const renderContent = () => {
+    if (activeTab === 'LEADERBOARD') {
+      return <LeaderboardScreen currentScore={score} currentUsername={username} />;
+    }
+
     if (gameStatus === 'GAME_OVER') {
       return (
         <ResultScreen 
@@ -87,27 +91,21 @@ export default function App() {
       );
     }
 
-    switch (activeTab) {
-      case 'GAME':
-        if (gameStatus === 'USERNAME_ENTRY') {
-          return <UsernameScreen onStartGame={handleStartGame} initialUsername={username} />;
-        }
-        return (
-          <GameScreen 
-            round={round}
-            hintsLeft={hintsLeft}
-            onUseHint={handleUseHint}
-            onGameEnd={handleGameEnd} 
-            onAbort={resetGame}
-            isRoundSuccess={gameStatus === 'ROUND_SUCCESS'}
-            lastWord={lastGameResult?.word}
-          />
-        );
-      case 'LEADERBOARD':
-        return <LeaderboardScreen currentScore={score} currentUsername={username} />;
-      default:
-        return <UsernameScreen onStartGame={handleStartGame} initialUsername={username} />;
+    if (gameStatus === 'USERNAME_ENTRY') {
+      return <UsernameScreen onStartGame={handleStartGame} initialUsername={username} />;
     }
+    
+    return (
+      <GameScreen 
+        round={round}
+        hintsLeft={hintsLeft}
+        onUseHint={handleUseHint}
+        onGameEnd={handleGameEnd} 
+        onAbort={resetGame}
+        isRoundSuccess={gameStatus === 'ROUND_SUCCESS'}
+        lastWord={lastGameResult?.word}
+      />
+    );
   };
 
   return (
